@@ -1,0 +1,27 @@
+<!-- music/templates/music/home.html -->
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Recommendation</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'music/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Get Song Recommendations</h1>
+        <form method="POST" action="{% url 'music:recommend' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Recommend</button>
+        </form>
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</body>
+</html>

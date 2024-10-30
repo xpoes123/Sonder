@@ -1,0 +1,288 @@
+<!-- music/templates/music/recommendations.html -->
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recommendations</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'music/styles.css' %}">
+    <style>
+        /* Container Styling */
+        .container {
+            width: 80%;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Song Card Styling */
+        .song-card {
+            display: none; /* Hidden by default */
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Active Song Card */
+        .song-card.active {
+            display: block;
+        }
+
+        /* Image Styling */
+        .song-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        /* Song Details */
+        .song-details {
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        /* Dating Profile Section */
+        .dating-profile {
+            margin-top: 15px;
+            text-align: left;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #007BFF;
+            border-radius: 3px;
+            display: none; /* Hidden by default */
+        }
+
+        /* Toggle Button */
+        .toggle-profile-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .toggle-profile-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            margin-top: 20px;
+        }
+
+        .nav-buttons button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .like-btn {
+            background-color: #28a745;
+        }
+
+        .like-btn:hover {
+            background-color: #218838;
+        }
+
+        .dislike-btn {
+            background-color: #dc3545;
+        }
+
+        .dislike-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* Audio Player Styling */
+        audio {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+
+        /* Back Link Styling */
+        .back-link {
+            display: block;
+            margin-top: 30px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                width: 95%;
+                padding: 10px;
+            }
+
+            .nav-buttons button {
+                width: 45%;
+                margin: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Song Recommendations</h1>
+        {% if recommendations %}
+            {% for song in recommendations %}
+                <div class="song-card {% if forloop.first %}active{% endif %}" id="song{{ forloop.counter }}">
+                    <!-- Song Title and Artist -->
+                    <h2>{{ song.name }} by {{ song.artist|join:", " }}</h2>
+                    
+                    <!-- Song Image -->
+                    {% if song.image %}
+                        <img src="{{ song.image }}" alt="{{ song.name }}">
+                    {% else %}
+                        <p>No image available.</p>
+                    {% endif %}
+                    
+                    <!-- Song Stats -->
+                    <div class="song-details">
+                        <p><strong>Acousticness:</strong> {{ song.stats.0 }}</p>
+                        <p><strong>Danceability:</strong> {{ song.stats.1 }}</p>
+                        <p><strong>Energy:</strong> {{ song.stats.3 }}</p>
+                        <!-- Add more stats as needed -->
+                    </div>
+                    
+                    <!-- Audio Preview -->
+                    {% if song.preview %}
+                        <audio controls>
+                            <source src="{{ song.preview }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    {% else %}
+                        <p>No preview available.</p>
+                    {% endif %}
+                    
+                    <!-- Toggle Dating Profile Button -->
+                    <button class="toggle-profile-btn" onclick="toggleProfile('profile{{ forloop.counter }}')">
+                        Show Dating Profile
+                    </button>
+                    
+                    <!-- Dating Profile Section -->
+                    <div class="dating-profile" id="profile{{ forloop.counter }}">
+                        <h3>Dating Profile</h3>
+                        <p><strong>Gender:</strong> {{ song.dating_profile.gender }}</p>
+                        <p><strong>Sexuality:</strong> {{ song.dating_profile.sexuality }}</p>
+                        <p><strong>Height:</strong> {{ song.dating_profile.height }}</p>
+                        <p><strong>Biography:</strong> {{ song.dating_profile.biography }}</p>
+                        <p><strong>Interests:</strong> {{ song.dating_profile.interest_list }}</p>
+                        <p><strong>Age:</strong> {{ song.dating_profile.age }}</p>
+                        <p><strong>Occupation:</strong> {{ song.dating_profile.occupation }}</p>
+                        <p><strong>Location:</strong> {{ song.dating_profile.location }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+            
+            <!-- Navigation Buttons -->
+            <div class="nav-buttons">
+                <button class="dislike-btn" onclick="navigate('previous')">Dislike</button>
+                <button class="like-btn" onclick="navigate('next')">Like</button>
+            </div>
+        {% else %}
+            <p>No recommendations available based on your input.</p>
+        {% endif %}
+        <a href="{% url 'music:home' %}" class="back-link">Back</a>
+    </div>
+
+    <!-- JavaScript for Toggle and Navigation Functionality -->
+    <script>
+        // Function to toggle the visibility of the dating profile
+        function toggleProfile(profileId) {
+            var profile = document.getElementById(profileId);
+            if (profile.style.display === "block") {
+                profile.style.display = "none";
+                event.target.textContent = "Show Dating Profile";
+            } else {
+                profile.style.display = "block";
+                event.target.textContent = "Hide Dating Profile";
+            }
+        }
+
+        // Function to navigate between songs
+        function navigate(direction) {
+            var activeCard = document.querySelector('.song-card.active');
+            var allCards = document.querySelectorAll('.song-card');
+            var currentIndex = Array.prototype.indexOf.call(allCards, activeCard);
+            var nextIndex;
+
+            // Pause all audios before navigating
+            var allAudios = document.querySelectorAll('audio');
+            allAudios.forEach(function(audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            });
+
+            if (direction === 'next') {
+                nextIndex = currentIndex + 1;
+                if (nextIndex >= allCards.length) {
+                    alert("You've reached the end of the recommendations!");
+                    return;
+                }
+            } else if (direction === 'previous') {
+                nextIndex = currentIndex - 1;
+                if (nextIndex < 0) {
+                    alert("You're at the first recommendation!");
+                    return;
+                }
+            }
+
+            // Hide current card
+            activeCard.classList.remove('active');
+
+            // Show next card
+            var nextCard = allCards[nextIndex];
+            nextCard.classList.add('active');
+
+            // Play next audio
+            var nextAudio = nextCard.querySelector('audio');
+            if (nextAudio) {
+                // Attempt to play the audio; handle autoplay restrictions
+                nextAudio.play().catch(function(error) {
+                    console.log("Autoplay was prevented:", error);
+                });
+            }
+
+            // Optional: Reset dating profile button text and hide profile
+            var buttons = document.querySelectorAll('.toggle-profile-btn');
+            buttons.forEach(function(btn) {
+                btn.textContent = "Show Dating Profile";
+            });
+            var profiles = document.querySelectorAll('.dating-profile');
+            profiles.forEach(function(profile) {
+                profile.style.display = "none";
+            });
+        }
+
+        // Automatically play the first audio when the page loads
+        document.addEventListener("DOMContentLoaded", function() {
+            var activeCard = document.querySelector('.song-card.active');
+            var audio = activeCard.querySelector('audio');
+            if (audio) {
+                audio.play().catch(function(error) {
+                    console.log("Autoplay was prevented:", error);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
