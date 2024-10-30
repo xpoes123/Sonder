@@ -8,7 +8,6 @@ from .services.generative_ai_service import get_dating_profile, parse_dating_pro
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
 import logging
 
 # Configure logging
@@ -16,34 +15,40 @@ logger = logging.getLogger(__name__)
 
 def home(request):
     form = RecommendationForm()
+    # Optionally clear seed_artists when accessing home
+    if 'seed_artists' in request.session:
+        del request.session['seed_artists']
     return render(request, 'music/home.html', {'form': form})
 
 def recommend(request):
     if request.method == 'POST':
+        # Initial recommendation based on user input
         form = RecommendationForm(request.POST)
         if form.is_valid():
-            artists_input = form.cleaned_data.get('artists', '')
-
-            # Split the inputs into lists, limit to 5
-            artists_list = [artist.strip() for artist in artists_input.split(',') if artist.strip()][:5]
-
-            # Check limits
-            if len(artists_list) > 5:
-                messages.warning(request, "You can only add up to 5 songs and 5 artists.")
+            # Collect all artist inputs
+            artists = []
+            for i in range(1, 6):
+                artist = form.cleaned_data.get(f'artist_{i}')
+                if artist:
+                    artists.append(artist.strip())
+            
+            # Check if at least one artist is provided
+            if not artists:
+                messages.error(request, "Please enter at least one artist.")
                 return redirect('music:home')
-
-            if not artists_list:
-                messages.error(request, "Please enter at least one song or artist.")
-                return redirect('music:home')
-
+            
             try:
-                # Save the artists to the session
-                request.session['saved_artists'] = artists_list
+                # Initialize the seed artists in the session
+                seed_artists = artists.copy()
+                request.session['seed_artists'] = seed_artists
 
-                # Process the lists to get Song objects
-                song_objects = process_lists(artists_list)
-                if not song_objects:
-                    messages.info(request, "No recommendations found based on your input.")
+                # Process the seed artists to get Song objects
+                for _ in range(20):
+                    song_objects = process_lists(seed_artists)
+                    if len(song_objects) == 1:
+                        break
+                else:
+                    messages.info(request, "No recommendations found based on your seed artists.")
                     return redirect('music:home')
 
                 # Generate dating profiles for each song
@@ -53,28 +58,35 @@ def recommend(request):
                     song.dating_profile = profile_data  # Attach profile data to the song object
 
                 context = {
-                    'recommendations': song_objects
+                    'recommendations': song_objects,
+                    'seed_artists': seed_artists,  # Ensure seed_artists is passed to the template
                 }
                 logger.info(f"Generated {len(song_objects)} song recommendations.")
                 return render(request, 'music/recommendations.html', context)
 
             except Exception as e:
-                logger.error(f"Error in recommend view: {e}")
+                logger.error(f"Error in recommend view (POST): {e}")
                 messages.error(request, f"An error occurred while processing your request: {e}")
                 return redirect('music:home')
+        else:
+            # If form is invalid, redirect back to home with errors
+            messages.error(request, "Invalid form submission.")
+            return redirect('music:home')
     else:
-        # Handle GET request, possibly to recommend again using saved artists
-        saved_artists = request.session.get('saved_artists', [])
-        if not saved_artists:
-            messages.error(request, "No saved artists found. Please provide artists to get recommendations.")
+        # Handle GET request, possibly for additional recommendations
+        seed_artists = request.session.get('seed_artists', [])
+        if not seed_artists:
+            messages.error(request, "No seed artists found. Please provide artists to get recommendations.")
             return redirect('music:home')
 
         try:
-            # No new songs or artists provided, use saved artists
-            song_objects = process_lists([], saved_artists)
-
-            if not song_objects:
-                messages.info(request, "No recommendations found based on your saved artists.")
+            # Process the current seed artists to get Song objects
+            for _ in range(20):
+                song_objects = process_lists(seed_artists)
+                if len(song_objects) == 1:
+                    break
+            else:
+                messages.info(request, "No recommendations found based on your seed artists.")
                 return redirect('music:home')
 
             # Generate dating profiles for each song
@@ -84,9 +96,10 @@ def recommend(request):
                 song.dating_profile = profile_data  # Attach profile data to the song object
 
             context = {
-                'recommendations': song_objects
+                'recommendations': song_objects,
+                'seed_artists': seed_artists,  # Ensure seed_artists is passed to the template
             }
-            logger.info(f"Generated {len(song_objects)} song recommendations using saved artists.")
+            logger.info(f"Generated {len(song_objects)} song recommendations using seed artists.")
             return render(request, 'music/recommendations.html', context)
 
         except Exception as e:

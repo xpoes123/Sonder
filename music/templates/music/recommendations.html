@@ -4,147 +4,217 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Recommendations</title>
+    <title>Song Recommendations</title>
     <link rel="stylesheet" type="text/css" href="{% static 'music/styles.css' %}">
     <style>
         /* Container Styling */
         .container {
-            width: 80%;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
+            width: 90%;
+            max-width: 400px; /* Reduced max-width for better fit on smaller screens */
+            max-height: 800px;
+            margin: 20px auto; /* Reduced top and bottom margins */
+            padding: 15px; /* Reduced padding */
             text-align: center;
             font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            border-radius: 8px; /* Slightly reduced border-radius */
+        }
+
+        /* Seed Artists Section */
+        .seed-artists {
+            margin-bottom: 20px; /* Reduced margin */
+            text-align: left;
+        }
+
+        .seed-artists h3 {
+            margin-bottom: 8px; /* Reduced margin */
+            color: #333;
+            font-size: 1.1em; /* Slightly smaller font size */
+        }
+
+        .seed-artists ul {
+            list-style-type: disc;
+            padding-left: 18px; /* Slightly reduced padding */
+            color: #555;
+            font-size: 0.95em; /* Slightly smaller font size */
         }
 
         /* Song Card Styling */
         .song-card {
-            display: none; /* Hidden by default */
             border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 15px; /* Reduced padding */
+            margin-bottom: 15px; /* Reduced margin */
+            border-radius: 8px; /* Slightly reduced border-radius */
             background-color: #fff;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1); /* Slightly reduced shadow */
             position: relative;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: transform 0.2s ease, opacity 0.2s ease; /* Faster transitions */
         }
 
-        /* Active Song Card */
-        .song-card.active {
-            display: block;
+        /* Song Title and Artist */
+        .song-card h2 {
+            margin-bottom: 10px; /* Reduced margin */
+            color: #007BFF;
+            font-size: 1.2em; /* Slightly smaller font size */
         }
 
-        /* Image Styling */
+        /* Song Image Styling */
         .song-card img {
             max-width: 100%;
             height: auto;
-            border-radius: 10px;
+            border-radius: 8px; /* Slightly reduced border-radius */
+            margin-bottom: 10px; /* Added margin for spacing */
         }
 
-        /* Song Details */
-        .song-details {
-            margin-top: 15px;
-            text-align: left;
+        /* Audio Player Styling */
+        .song-card audio {
+            width: 100%;
+            margin-top: 10px; /* Reduced margin */
+            border-radius: 4px; /* Reduced border-radius */
+        }
+
+        /* Toggle Dating Profile Button */
+        .toggle-profile-btn {
+            margin-top: 10px; /* Reduced margin */
+            padding: 8px 16px; /* Reduced padding */
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 18px; /* Reduced border-radius */
+            cursor: pointer;
+            font-size: 0.9em; /* Slightly smaller font size */
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-profile-btn:hover {
+            background-color: #138496;
         }
 
         /* Dating Profile Section */
         .dating-profile {
-            margin-top: 15px;
+            margin-top: 10px; /* Reduced margin */
             text-align: left;
-            background-color: #f9f9f9;
-            padding: 10px;
-            border-left: 4px solid #007BFF;
-            border-radius: 3px;
+            background-color: #e9ecef;
+            padding: 10px; /* Reduced padding */
+            border-left: 4px solid #17a2b8; /* Slightly reduced border width */
+            border-radius: 4px; /* Reduced border-radius */
             display: none; /* Hidden by default */
+            font-size: 0.9em; /* Slightly smaller font size */
         }
 
-        /* Toggle Button */
-        .toggle-profile-btn {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .toggle-profile-btn:hover {
-            background-color: #0056b3;
-        }
-
-        /* Navigation Buttons */
+        /* Recommend Button Styling */
         .nav-buttons {
-            margin-top: 20px;
+            display: flex;
+            flex-direction: row; /* Align items horizontally */
+            gap: 8px; /* Reduced space between buttons */
+            justify-content: center; /* Center the buttons horizontally */
+            align-items: center; /* Center the buttons vertically */
+            margin-top: 10px; /* Reduced margin above buttons */
         }
 
-        .nav-buttons button {
-            padding: 10px 20px;
-            margin: 0 10px;
-            font-size: 16px;
+        .like-btn, .dislike-btn {
+            padding: 8px 16px; /* Reduced padding */
             border: none;
-            border-radius: 25px;
+            border-radius: 4px; /* Reduced border-radius */
             cursor: pointer;
-            color: white;
+            color: #fff;
+            font-size: 0.9em; /* Slightly smaller font size */
+            transition: background-color 0.3s ease;
+            min-width: 80px; /* Ensures buttons are not too small */
         }
 
         .like-btn {
-            background-color: #28a745;
-        }
-
-        .like-btn:hover {
-            background-color: #218838;
+            background-color: #28a745; /* Green */
         }
 
         .dislike-btn {
-            background-color: #dc3545;
+            background-color: #dc3545; /* Red */
+        }
+
+        .like-btn:hover {
+            background-color: #218838; /* Darker green on hover */
         }
 
         .dislike-btn:hover {
-            background-color: #c82333;
-        }
-
-        /* Audio Player Styling */
-        audio {
-            width: 100%;
-            margin-top: 15px;
-            border-radius: 5px;
+            background-color: #c82333; /* Darker red on hover */
         }
 
         /* Back Link Styling */
         .back-link {
             display: block;
-            margin-top: 30px;
+            margin-top: 20px; /* Reduced margin */
             text-decoration: none;
             color: #007BFF;
             font-weight: bold;
+            transition: color 0.3s ease;
+            font-size: 0.95em; /* Slightly smaller font size */
         }
 
         .back-link:hover {
-            text-decoration: underline;
+            color: #0056b3;
         }
 
-        /* Responsive Design */
+        /* Messages Styling */
+        .messages {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 15px; /* Reduced margin */
+        }
+
+        .messages li {
+            padding: 8px; /* Reduced padding */
+            margin-bottom: 8px; /* Reduced margin */
+            border-radius: 4px; /* Reduced border-radius */
+            font-size: 0.9em; /* Slightly smaller font size */
+        }
+
+        .messages li.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .messages li.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .messages li.warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .messages li.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Responsive Design Enhancements */
         @media (max-width: 600px) {
             .container {
                 width: 95%;
-                padding: 10px;
+                padding: 10px; /* Further reduced padding */
             }
 
-            .nav-buttons button {
-                width: 45%;
-                margin: 5px;
+            .nav-buttons {
+                flex-direction: column; /* Stack buttons vertically on small screens */
+                gap: 6px; /* Reduced gap */
+            }
+
+            .like-btn, .dislike-btn {
+                width: 100%; /* Make buttons full-width */
+                min-width: unset; /* Remove min-width */
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Your Song Recommendations</h1>
+        <h1>Sonder</h1>
+
+        <!-- Recommendations Section -->
         {% if recommendations %}
             {% for song in recommendations %}
-                <div class="song-card {% if forloop.first %}active{% endif %}" id="song{{ forloop.counter }}">
+                <div class="song-card" id="song{{ forloop.counter }}">
                     <!-- Song Title and Artist -->
                     <h2>{{ song.name }} by {{ song.artist|join:", " }}</h2>
                     
@@ -182,101 +252,67 @@
                         <p><strong>Occupation:</strong> {{ song.dating_profile.occupation }}</p>
                         <p><strong>Location:</strong> {{ song.dating_profile.location }}</p>
                     </div>
+
+                    <!-- Like and Dislike Buttons -->
+                    <div class="nav-buttons">
+                        <!-- Dislike Form -->
+                        <form method="GET" action="{% url 'music:recommend' %}">
+                            <input type="hidden" name="action" value="dislike">
+                            <!-- Optionally, include song identifier if needed -->
+                            <input type="hidden" name="song_id" value="{{ song.song_id }}">
+                            <button type="submit" class="dislike-btn">Dislike</button>
+                        </form>
+                        <!-- Like Form -->
+                        <form method="GET" action="{% url 'music:recommend' %}">
+                            <input type="hidden" name="artist" value="{{ song.artist.0 }}">
+                            <input type="hidden" name="action" value="like">
+                            <button type="submit" class="like-btn">Like</button>
+                        </form>
+                    </div>                    
                 </div>
             {% endfor %}
-            
-            <!-- Navigation Buttons -->
-            <div class="nav-buttons">
-                <form method="POST" action="{% url 'music:recommend' %}">
-                    {% csrf_token %}
-                    <button type="submit">Recommend</button>
-                </form>
-                <!-- <button class="dislike-btn" onclick="navigate('previous')">Dislike</button>
-                <button class="like-btn" onclick="navigate('next')">Like</button> -->
-            </div>
         {% else %}
             <p>No recommendations available based on your input.</p>
         {% endif %}
-        <a href="{% url 'music:home' %}" class="back-link">Back</a>
+        
+        <!-- Back Link -->
+        <a href="{% url 'music:home' %}" class="back-link">Back to Home</a>
+        
+        <!-- Messages Display -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </div>
 
-    <!-- JavaScript for Toggle and Navigation Functionality -->
+    <!-- JavaScript for Toggle Functionality -->
     <script>
         // Function to toggle the visibility of the dating profile
         function toggleProfile(profileId) {
             var profile = document.getElementById(profileId);
+            var button = event.target;
             if (profile.style.display === "block") {
                 profile.style.display = "none";
-                event.target.textContent = "Show Dating Profile";
+                button.textContent = "Show Dating Profile";
             } else {
                 profile.style.display = "block";
-                event.target.textContent = "Hide Dating Profile";
+                button.textContent = "Hide Dating Profile";
             }
-        }
-
-        // Function to navigate between songs
-        function navigate(direction) {
-            var activeCard = document.querySelector('.song-card.active');
-            var allCards = document.querySelectorAll('.song-card');
-            var currentIndex = Array.prototype.indexOf.call(allCards, activeCard);
-            var nextIndex;
-
-            // Pause all audios before navigating
-            var allAudios = document.querySelectorAll('audio');
-            allAudios.forEach(function(audio) {
-                audio.pause();
-                audio.currentTime = 0;
-            });
-
-            if (direction === 'next') {
-                nextIndex = currentIndex + 1;
-                if (nextIndex >= allCards.length) {
-                    alert("You've reached the end of the recommendations!");
-                    return;
-                }
-            } else if (direction === 'previous') {
-                nextIndex = currentIndex - 1;
-                if (nextIndex < 0) {
-                    alert("You're at the first recommendation!");
-                    return;
-                }
-            }
-
-            // Hide current card
-            activeCard.classList.remove('active');
-
-            // Show next card
-            var nextCard = allCards[nextIndex];
-            nextCard.classList.add('active');
-
-            // Play next audio
-            var nextAudio = nextCard.querySelector('audio');
-            if (nextAudio) {
-                // Attempt to play the audio; handle autoplay restrictions
-                nextAudio.play().catch(function(error) {
-                    console.log("Autoplay was prevented:", error);
-                });
-            }
-
-            // Optional: Reset dating profile button text and hide profile
-            var buttons = document.querySelectorAll('.toggle-profile-btn');
-            buttons.forEach(function(btn) {
-                btn.textContent = "Show Dating Profile";
-            });
-            var profiles = document.querySelectorAll('.dating-profile');
-            profiles.forEach(function(profile) {
-                profile.style.display = "none";
-            });
         }
 
         // Automatically play the first audio when the page loads
         document.addEventListener("DOMContentLoaded", function() {
-            var activeCard = document.querySelector('.song-card.active');
-            var audio = activeCard.querySelector('audio');
-            if (audio) {
-                audio.play().catch(function(error) {
-                    console.log("Autoplay was prevented:", error);
-                });
+            var firstSong = document.querySelector('.song-card');
+            if (firstSong) {
+                var audio = firstSong.querySelector('audio');
+                if (audio) {
+                    audio.play().catch(function(error) {
+                        console.log("Autoplay was prevented:", error);
+                    });
+                }
             }
         });
     </script>

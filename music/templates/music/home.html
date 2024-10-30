@@ -6,22 +6,208 @@
 <head>
     <title>Music Recommendation</title>
     <link rel="stylesheet" type="text/css" href="{% static 'music/styles.css' %}">
+    <style>
+        /* Container Styling */
+        .container {
+            width: 90%;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 25px;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Heading */
+        .container h1 {
+            margin-bottom: 20px;
+            color: #333333;
+            font-size: 1.8em;
+        }
+
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Input Fields */
+        .artist-input {
+            position: relative;
+        }
+
+        .artist-input input {
+            width: 80%;
+            padding: 12px 15px;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .artist-input input:focus {
+            border-color: #007BFF;
+            outline: none;
+        }
+
+        /* Add Artist Button */
+        #add-artist-btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #add-artist-btn:hover:not(:disabled) {
+            background-color: #218838;
+        }
+
+        #add-artist-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            padding: 12px 20px;
+            background-color: #007BFF;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: #0069d9;
+        }
+
+        /* Messages Styling */
+        .messages {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .messages li {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 0.95em;
+        }
+
+        .messages li.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .messages li.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .messages li.warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .messages li.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .container h1 {
+                font-size: 1.5em;
+            }
+
+            #add-artist-btn, .submit-btn {
+                font-size: 0.95em;
+                padding: 10px 18px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Get Song Recommendations</h1>
-        <form method="POST" action="{% url 'music:recommend' %}">
+        <h1>Sonder</h1>
+        <form method="POST" action="{% url 'music:recommend' %}" id="artist-form">
             {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit">Recommend</button>
+            
+            <div class="artist-input" id="artist-input-1">
+                {{ form.artist_1 }}
+            </div>
+            
+            <!-- Additional Artist Inputs will be appended here -->
+            
+            <button type="button" id="add-artist-btn">Add Artist</button>
+            <button type="submit" class="submit-btn">Recommend</button>
         </form>
+        
+        <!-- Messages Display -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <li class="{{ message.tags }}">{{ message }}</li>
                 {% endfor %}
             </ul>
         {% endif %}
     </div>
+
+    <!-- JavaScript for Dynamic Input Fields -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addArtistBtn = document.getElementById('add-artist-btn');
+            const form = document.getElementById('artist-form');
+            let artistCount = 1;
+            const maxArtists = 5;
+
+            addArtistBtn.addEventListener('click', function() {
+                if (artistCount < maxArtists) {
+                    artistCount += 1;
+                    const newInputDiv = document.createElement('div');
+                    newInputDiv.classList.add('artist-input');
+                    newInputDiv.id = `artist-input-${artistCount}`;
+                    
+                    // Create the new input field
+                    const newInput = document.createElement('input');
+                    newInput.type = 'text';
+                    newInput.name = `artist_${artistCount}`;
+                    newInput.placeholder = `Artist ${artistCount}`;
+                    newInput.required = false;
+                    
+                    // Optionally, add label
+                    const label = document.createElement('label');
+                    label.textContent = `Artist ${artistCount}:`;
+                    label.setAttribute('for', `id_artist_${artistCount}`);
+                    label.style.display = 'none'; // Hide label if not needed
+
+                    newInputDiv.appendChild(label);
+                    newInputDiv.appendChild(newInput);
+                    
+                    // Insert the new input before the Add Artist button
+                    form.insertBefore(newInputDiv, addArtistBtn);
+                    
+                    // Disable Add Artist button if max reached
+                    if (artistCount === maxArtists) {
+                        addArtistBtn.disabled = true;
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

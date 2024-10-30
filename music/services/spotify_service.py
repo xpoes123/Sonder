@@ -159,8 +159,14 @@ def process_lists(artist_list):
         song_info = get_song_info(track["id"])
         if song_info == 0:
             continue
-        song = Song(song_id=track["id"], name=song_info[1], artist=song_info[2],
-                    stats=song_info[4], image=song_info[0], preview=song_info[3])
+        song = Song(
+            song_id=track["id"],
+            name=song_info[1],
+            artist=song_info[2],
+            stats=song_info[4],
+            image=song_info[0],
+            preview=song_info[3]
+        )
         song_objects.append(song)
 
     random.shuffle(song_objects)
