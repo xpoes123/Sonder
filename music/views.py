@@ -22,67 +22,74 @@ def recommend(request):
     if request.method == 'POST':
         form = RecommendationForm(request.POST)
         if form.is_valid():
-            songs_input = form.cleaned_data.get('songs', '')
             artists_input = form.cleaned_data.get('artists', '')
-            
+
             # Split the inputs into lists, limit to 5
-            songs_list = [song.strip() for song in songs_input.split(',') if song.strip()][:5]
             artists_list = [artist.strip() for artist in artists_input.split(',') if artist.strip()][:5]
-            
+
             # Check limits
-            if len(songs_input.split(',')) > 5 or len(artists_input.split(',')) > 5:
+            if len(artists_list) > 5:
                 messages.warning(request, "You can only add up to 5 songs and 5 artists.")
                 return redirect('music:home')
-            
-            if not songs_list and not artists_list:
+
+            if not artists_list:
                 messages.error(request, "Please enter at least one song or artist.")
                 return redirect('music:home')
-            
+
             try:
+                # Save the artists to the session
+                request.session['saved_artists'] = artists_list
+
                 # Process the lists to get Song objects
-                song_objects = process_lists(songs_list, artists_list)
-                
+                song_objects = process_lists(artists_list)
                 if not song_objects:
                     messages.info(request, "No recommendations found based on your input.")
                     return redirect('music:home')
-                
+
                 # Generate dating profiles for each song
                 for song in song_objects:
                     dating_profile_text = get_dating_profile(song.name, song.artist[0], song.stats)
                     profile_data = parse_dating_profile(dating_profile_text)
                     song.dating_profile = profile_data  # Attach profile data to the song object
-                
+
                 context = {
                     'recommendations': song_objects
                 }
                 logger.info(f"Generated {len(song_objects)} song recommendations.")
                 return render(request, 'music/recommendations.html', context)
-            
+
             except Exception as e:
                 logger.error(f"Error in recommend view: {e}")
                 messages.error(request, f"An error occurred while processing your request: {e}")
                 return redirect('music:home')
     else:
-        return redirect('music:home')
+        # Handle GET request, possibly to recommend again using saved artists
+        saved_artists = request.session.get('saved_artists', [])
+        if not saved_artists:
+            messages.error(request, "No saved artists found. Please provide artists to get recommendations.")
+            return redirect('music:home')
 
+        try:
+            # No new songs or artists provided, use saved artists
+            song_objects = process_lists([], saved_artists)
 
-@require_POST
-# @login_required  # Uncomment if authentication is required
-def like(request):
-    try:
-        # Implement your like processing logic here
-        # For example, increment a like count, associate the like with a user, etc.
-        # Example:
-        # song_id = request.POST.get('song_id')
-        # song = Song.objects.get(id=song_id)
-        # song.likes += 1
-        # song.save()
+            if not song_objects:
+                messages.info(request, "No recommendations found based on your saved artists.")
+                return redirect('music:home')
 
-        logger.info("User liked a song.")
-        response = {'status': 'success', 'message': 'You liked the song!'}
-        return JsonResponse(response)
-    except Exception as e:
-        logger.error(f"Error in like view: {e}")
-        response = {'status': 'error', 'message': 'An error occurred while liking the song.'}
-        return JsonResponse(response, status=500)
+            # Generate dating profiles for each song
+            for song in song_objects:
+                dating_profile_text = get_dating_profile(song.name, song.artist[0], song.stats)
+                profile_data = parse_dating_profile(dating_profile_text)
+                song.dating_profile = profile_data  # Attach profile data to the song object
 
+            context = {
+                'recommendations': song_objects
+            }
+            logger.info(f"Generated {len(song_objects)} song recommendations using saved artists.")
+            return render(request, 'music/recommendations.html', context)
+
+        except Exception as e:
+            logger.error(f"Error in recommend view (GET): {e}")
+            messages.error(request, f"An error occurred while processing your request: {e}")
+            return redirect('music:home')

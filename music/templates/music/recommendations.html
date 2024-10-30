@@ -155,14 +155,6 @@
                         <p>No image available.</p>
                     {% endif %}
                     
-                    <!-- Song Stats -->
-                    <div class="song-details">
-                        <p><strong>Acousticness:</strong> {{ song.stats.0 }}</p>
-                        <p><strong>Danceability:</strong> {{ song.stats.1 }}</p>
-                        <p><strong>Energy:</strong> {{ song.stats.3 }}</p>
-                        <!-- Add more stats as needed -->
-                    </div>
-                    
                     <!-- Audio Preview -->
                     {% if song.preview %}
                         <audio controls>
@@ -195,8 +187,12 @@
             
             <!-- Navigation Buttons -->
             <div class="nav-buttons">
-                <button class="dislike-btn" onclick="navigate('previous')">Dislike</button>
-                <button class="like-btn" onclick="navigate('next')">Like</button>
+                <form method="POST" action="{% url 'music:recommend' %}">
+                    {% csrf_token %}
+                    <button type="submit">Recommend</button>
+                </form>
+                <!-- <button class="dislike-btn" onclick="navigate('previous')">Dislike</button>
+                <button class="like-btn" onclick="navigate('next')">Like</button> -->
             </div>
         {% else %}
             <p>No recommendations available based on your input.</p>

@@ -20,7 +20,6 @@ class Song:
         self.preview = preview
         self.dating_profile = None  # To be added later
 
-
 def printj(json_file):
     print(json.dumps(json_file, indent=4))
 
@@ -122,13 +121,11 @@ def get_song_name(song_json):
 def get_song_image(song_json):
     return song_json["album"]["images"][1]['url'] if len(song_json["album"]["images"]) > 1 else song_json["album"]["images"][0]['url']
 
-def get_songs_from_seed(song_seed, artist_seed):
+def get_songs_from_seed(artist_seed, limit = 1):
     url = "https://api.spotify.com/v1/recommendations"
     query = ""
     if artist_seed:
-        query += f"seed_artists={artist_seed}"
-        if song_seed:
-            query += f"&seed_tracks={song_seed}"
+        query += f"seed_artists={artist_seed}&limit={limit}"
     url += f"?{query}"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
@@ -148,20 +145,14 @@ def recommend_seed(song_seed, artist_seed):
     random.shuffle(song_infos)
     return song_infos
 
-def generate_song_seed(song_list):
-    # Implement seed generation based on song_list
-    print(song_list)
-    return ""
-
 def generate_artist_seed(artist_list):
     ids = [search_for_artist(token, artist) for artist in artist_list]
     artist_seed = ",".join(filter(None, ids))
     return artist_seed
 
-def process_lists(song_list, artist_list):
-    song_seed = generate_song_seed(song_list)
+def process_lists(artist_list):
     artist_seed = generate_artist_seed(artist_list)
-    tracks = get_songs_from_seed(song_seed, artist_seed)
+    tracks = get_songs_from_seed(artist_seed)
 
     song_objects = []
     for track in tracks:
@@ -174,9 +165,3 @@ def process_lists(song_list, artist_list):
 
     random.shuffle(song_objects)
     return song_objects
-
-def validate_song(song):
-    pass
-
-def validate_artist(artist):
-    pass
