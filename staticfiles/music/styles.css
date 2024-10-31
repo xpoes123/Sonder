@@ -1,0 +1,309 @@
+/* static/music/styles.css */
+
+/* Light Theme Variables */
+:root {
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --container-bg-color: #f2f2f2;
+    --button-bg-color: #007BFF;
+    --button-text-color: #ffffff;
+    --button-hover-bg-color: #0056b3;
+    --toggle-bg-color: #17a2b8;
+    --toggle-hover-bg-color: #138496;
+    --profile-bg-color: #e9ecef;
+    --message-info-bg: #d1ecf1;
+    --message-info-color: #0c5460;
+    --message-success-bg: #d4edda;
+    --message-success-color: #155724;
+    --message-warning-bg: #fff3cd;
+    --message-warning-color: #856404;
+    --message-error-bg: #f8d7da;
+    --message-error-color: #721c24;
+}
+
+/* Dark Theme Variables */
+.dark-mode {
+    --background-color: #121212;
+    --text-color: #e0e0e0;
+    --container-bg-color: #1e1e1e;
+    --button-bg-color: #1f6feb;
+    --button-text-color: #ffffff;
+    --button-hover-bg-color: #1158c7;
+    --toggle-bg-color: #28a745;
+    --toggle-hover-bg-color: #218838;
+    --profile-bg-color: #2c2c2c;
+    --message-info-bg: #0c5460;
+    --message-info-color: #d1ecf1;
+    --message-success-bg: #155724;
+    --message-success-color: #d4edda;
+    --message-warning-bg: #856404;
+    --message-warning-color: #fff3cd;
+    --message-error-bg: #721c24;
+    --message-error-color: #f8d7da;
+}
+
+/* Apply Variables to Elements */
+
+/* General Styles */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    width: 90%;
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 25px;
+    text-align: center;
+    background-color: var(--container-bg-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, p {
+    color: var(--text-color);
+}
+
+/* Button Styles */
+button, .like-btn, .dislike-btn, .toggle-profile-btn, #add-artist-btn, .submit-btn {
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1em;
+}
+
+button:hover, .like-btn:hover, .dislike-btn:hover, .toggle-profile-btn:hover, #add-artist-btn:hover, .submit-btn:hover {
+    background-color: var(--button-hover-bg-color);
+}
+
+/* Toggle Button Styles */
+.theme-toggle-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--toggle-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 1.2em;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle-button:hover {
+    background-color: var(--toggle-hover-bg-color);
+}
+
+/* Dating Profile Section */
+.dating-profile {
+    margin-top: 10px;
+    text-align: left;
+    background-color: var(--profile-bg-color);
+    padding: 10px;
+    border-left: 4px solid var(--toggle-bg-color);
+    border-radius: 4px;
+    display: none;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Like and Dislike Buttons */
+.nav-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.like-btn, .dislike-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--button-text-color);
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+    min-width: 80px;
+}
+
+.like-btn {
+    background-color: #28a745; /* Green */
+}
+
+.dislike-btn {
+    background-color: #dc3545; /* Red */
+}
+
+.like-btn:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.dislike-btn:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+/* Back Link Styling */
+.back-link {
+    display: block;
+    margin-top: 20px;
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+    transition: color 0.3s ease;
+    font-size: 0.95em;
+}
+
+.back-link:hover {
+    color: #0056b3;
+}
+
+.dark-mode .back-link {
+    color: #1f6feb;
+}
+
+.dark-mode .back-link:hover {
+    color: #0a3d91;
+}
+
+/* Messages Styling */
+.messages {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 15px;
+}
+
+.messages li {
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.messages li.info {
+    background-color: var(--message-info-bg);
+    color: var(--message-info-color);
+}
+
+.messages li.success {
+    background-color: var(--message-success-bg);
+    color: var(--message-success-color);
+}
+
+.messages li.warning {
+    background-color: var(--message-warning-bg);
+    color: var(--message-warning-color);
+}
+
+.messages li.error {
+    background-color: var(--message-error-bg);
+    color: var(--message-error-color);
+}
+
+/* Form Inputs */
+form input[type="text"] {
+    width: 80%;
+    padding: 12px 15px;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.dark-mode form input[type="text"] {
+    background-color: #333333;
+    color: #e0e0e0;
+    border: 1px solid #555555;
+}
+
+form input[type="text"]:focus {
+    border-color: #007BFF;
+    outline: none;
+}
+
+.dark-mode form input[type="text"]:focus {
+    border-color: #1f6feb;
+}
+
+/* Add Artist Button */
+#add-artist-btn {
+    padding: 10px 20px;
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#add-artist-btn:hover:not(:disabled) {
+    background-color: var(--button-hover-bg-color);
+}
+
+#add-artist-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Submit Button */
+.submit-btn {
+    padding: 12px 20px;
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: var(--button-hover-bg-color);
+}
+
+/* Responsive Design Enhancements */
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .container h1 {
+        font-size: 1.5em;
+    }
+
+    #add-artist-btn, .submit-btn {
+        font-size: 0.95em;
+        padding: 10px 18px;
+    }
+
+    .nav-buttons {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .like-btn, .dislike-btn {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .toggle-profile-btn {
+        font-size: 1em;
+    }
+}

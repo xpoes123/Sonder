@@ -11,13 +11,14 @@ import gemini  # Ensure this is installed or handle appropriately
 from django.conf import settings
 
 class Song:
-    def __init__(self, song_id, name, artist, stats, image, preview):
+    def __init__(self, song_id, name, artist, stats, image, preview, link):
         self.song_id = song_id
         self.name = name
         self.artist = artist
         self.stats = stats
         self.image = image
         self.preview = preview
+        self.link = link
         self.dating_profile = None  # To be added later
 
 def printj(json_file):
@@ -72,6 +73,9 @@ def get_artist_tracks(token, artist_id):
     json_result = result.json()
     return json_result["tracks"]
 
+def get_track_link(json_result):
+    return json_result["album"]["external_urls"]["spotify"]
+
 # Returns the song's image, name, artist, preview_url, and stats
 def get_song_info(song_id):
     url = f"https://api.spotify.com/v1/tracks/{song_id}"
@@ -83,9 +87,10 @@ def get_song_info(song_id):
     artist_name = get_song_artist_name(json_result)
     preview_url = get_song_preview(json_result)
     stats = get_song_stats(song_id)
+    link = get_track_link(json_result)
     if not preview_url:
         return 0
-    return image, name, artist_name, preview_url, stats
+    return image, name, artist_name, preview_url, stats, link
 
 def get_dating_profile(song):
     return gemini.get_dating_profile(song.name, song.artist[0], song.stats)
@@ -107,7 +112,11 @@ def get_song_stats(song_id):
     speech = json_result["speechiness"]
     tempo = json_result["tempo"]
     valence = json_result["valence"]
-    return acoustic, dance, duration, energy, instrumental, key, liveness, loud, mode, speech, tempo, valence
+    url_pop = f"https://api.spotify.com/v1/tracks/{song_id}"
+    result_pop = get(url_pop, headers=headers)
+    json_result_pop = result_pop.json()
+    pop = json_result_pop['popularity']
+    return acoustic, dance, duration, energy, instrumental, key, liveness, loud, mode, speech, tempo, valence, pop
 
 def get_song_artist_name(song_json):
     return [artist["name"] for artist in song_json["artists"]]
@@ -121,7 +130,7 @@ def get_song_name(song_json):
 def get_song_image(song_json):
     return song_json["album"]["images"][1]['url'] if len(song_json["album"]["images"]) > 1 else song_json["album"]["images"][0]['url']
 
-def get_songs_from_seed(artist_seed, limit = 1):
+def get_songs_from_seed(artist_seed, stats, limit = 1):
     url = "https://api.spotify.com/v1/recommendations"
     query = ""
     if artist_seed:
@@ -140,7 +149,7 @@ def recommend_seed(song_seed, artist_seed):
         if song_info == 0:
             continue
         song = Song(song_id=track["id"], name=song_info[1], image=song_info[0],
-                    artist=song_info[2], preview=song_info[3], stats=song_info[4])
+                    artist=song_info[2], preview=song_info[3], stats=song_info[4], link=song_info[5])
         song_infos.append(song)
     random.shuffle(song_infos)
     return song_infos
@@ -150,9 +159,9 @@ def generate_artist_seed(artist_list):
     artist_seed = ",".join(filter(None, ids))
     return artist_seed
 
-def process_lists(artist_list):
+def process_lists(artist_list, stats = {}):
     artist_seed = generate_artist_seed(artist_list)
-    tracks = get_songs_from_seed(artist_seed)
+    tracks = get_songs_from_seed(artist_seed, stats)
 
     song_objects = []
     for track in tracks:
@@ -165,9 +174,16 @@ def process_lists(artist_list):
             artist=song_info[2],
             stats=song_info[4],
             image=song_info[0],
-            preview=song_info[3]
+            preview=song_info[3],
+            link = song_info[5],
         )
         song_objects.append(song)
 
     random.shuffle(song_objects)
     return song_objects
+
+def elbow_method():
+    pass
+
+def k_means():
+    pass

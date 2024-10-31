@@ -1,5 +1,3 @@
-<!-- music/templates/music/recommendations.html -->
-
 {% load static %}
 <!DOCTYPE html>
 <html>
@@ -10,79 +8,59 @@
         /* Container Styling */
         .container {
             width: 90%;
-            max-width: 400px; /* Reduced max-width for better fit on smaller screens */
-            max-height: 800px;
-            margin: 20px auto; /* Reduced top and bottom margins */
-            padding: 15px; /* Reduced padding */
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 15px;
             text-align: center;
             font-family: Arial, sans-serif;
             background-color: #f2f2f2;
-            border-radius: 8px; /* Slightly reduced border-radius */
-        }
-
-        /* Seed Artists Section */
-        .seed-artists {
-            margin-bottom: 20px; /* Reduced margin */
-            text-align: left;
-        }
-
-        .seed-artists h3 {
-            margin-bottom: 8px; /* Reduced margin */
-            color: #333;
-            font-size: 1.1em; /* Slightly smaller font size */
-        }
-
-        .seed-artists ul {
-            list-style-type: disc;
-            padding-left: 18px; /* Slightly reduced padding */
-            color: #555;
-            font-size: 0.95em; /* Slightly smaller font size */
+            border-radius: 8px;
         }
 
         /* Song Card Styling */
         .song-card {
             border: 1px solid #ccc;
-            padding: 15px; /* Reduced padding */
-            margin-bottom: 15px; /* Reduced margin */
-            border-radius: 8px; /* Slightly reduced border-radius */
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
             background-color: #fff;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1); /* Slightly reduced shadow */
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             position: relative;
-            transition: transform 0.2s ease, opacity 0.2s ease; /* Faster transitions */
+            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
         /* Song Title and Artist */
         .song-card h2 {
-            margin-bottom: 10px; /* Reduced margin */
+            margin-bottom: 10px;
             color: #007BFF;
-            font-size: 1.2em; /* Slightly smaller font size */
+            font-size: 1.2em;
         }
 
         /* Song Image Styling */
         .song-card img {
             max-width: 100%;
             height: auto;
-            border-radius: 8px; /* Slightly reduced border-radius */
-            margin-bottom: 10px; /* Added margin for spacing */
+            border-radius: 8px;
+            margin-bottom: 10px;
         }
 
         /* Audio Player Styling */
         .song-card audio {
             width: 100%;
-            margin-top: 10px; /* Reduced margin */
-            border-radius: 4px; /* Reduced border-radius */
+            margin-top: 10px;
+            border-radius: 4px;
         }
 
         /* Toggle Dating Profile Button */
         .toggle-profile-btn {
-            margin-top: 10px; /* Reduced margin */
-            padding: 8px 16px; /* Reduced padding */
+            margin-top: 10px;
+            padding: 8px 16px;
             background-color: #17a2b8;
             color: white;
             border: none;
-            border-radius: 18px; /* Reduced border-radius */
+            border-radius: 18px;
             cursor: pointer;
-            font-size: 0.9em; /* Slightly smaller font size */
+            font-size: 0.9em;
             transition: background-color 0.3s ease;
         }
 
@@ -92,62 +70,62 @@
 
         /* Dating Profile Section */
         .dating-profile {
-            margin-top: 10px; /* Reduced margin */
+            margin-top: 10px;
             text-align: left;
             background-color: #e9ecef;
-            padding: 10px; /* Reduced padding */
-            border-left: 4px solid #17a2b8; /* Slightly reduced border width */
-            border-radius: 4px; /* Reduced border-radius */
-            display: none; /* Hidden by default */
-            font-size: 0.9em; /* Slightly smaller font size */
+            padding: 10px;
+            border-left: 4px solid #17a2b8;
+            border-radius: 4px;
+            display: none;
+            font-size: 0.9em;
         }
 
         /* Recommend Button Styling */
         .nav-buttons {
             display: flex;
-            flex-direction: row; /* Align items horizontally */
-            gap: 8px; /* Reduced space between buttons */
-            justify-content: center; /* Center the buttons horizontally */
-            align-items: center; /* Center the buttons vertically */
-            margin-top: 10px; /* Reduced margin above buttons */
+            flex-direction: row;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
         }
 
         .like-btn, .dislike-btn {
-            padding: 8px 16px; /* Reduced padding */
+            padding: 8px 16px;
             border: none;
-            border-radius: 4px; /* Reduced border-radius */
+            border-radius: 4px;
             cursor: pointer;
             color: #fff;
-            font-size: 0.9em; /* Slightly smaller font size */
+            font-size: 0.9em;
             transition: background-color 0.3s ease;
-            min-width: 80px; /* Ensures buttons are not too small */
+            min-width: 80px;
         }
 
         .like-btn {
-            background-color: #28a745; /* Green */
+            background-color: #28a745;
         }
 
         .dislike-btn {
-            background-color: #dc3545; /* Red */
+            background-color: #dc3545;
         }
 
         .like-btn:hover {
-            background-color: #218838; /* Darker green on hover */
+            background-color: #218838;
         }
 
         .dislike-btn:hover {
-            background-color: #c82333; /* Darker red on hover */
+            background-color: #c82333;
         }
 
         /* Back Link Styling */
         .back-link {
             display: block;
-            margin-top: 20px; /* Reduced margin */
+            margin-top: 20px;
             text-decoration: none;
             color: #007BFF;
             font-weight: bold;
             transition: color 0.3s ease;
-            font-size: 0.95em; /* Slightly smaller font size */
+            font-size: 0.95em;
         }
 
         .back-link:hover {
@@ -158,14 +136,14 @@
         .messages {
             list-style-type: none;
             padding: 0;
-            margin-top: 15px; /* Reduced margin */
+            margin-top: 15px;
         }
 
         .messages li {
-            padding: 8px; /* Reduced padding */
-            margin-bottom: 8px; /* Reduced margin */
-            border-radius: 4px; /* Reduced border-radius */
-            font-size: 0.9em; /* Slightly smaller font size */
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
 
         .messages li.info {
@@ -192,17 +170,17 @@
         @media (max-width: 600px) {
             .container {
                 width: 95%;
-                padding: 10px; /* Further reduced padding */
+                padding: 10px;
             }
 
             .nav-buttons {
-                flex-direction: column; /* Stack buttons vertically on small screens */
-                gap: 6px; /* Reduced gap */
+                flex-direction: column;
+                gap: 6px;
             }
 
             .like-btn, .dislike-btn {
-                width: 100%; /* Make buttons full-width */
-                min-width: unset; /* Remove min-width */
+                width: 100%;
+                min-width: unset;
             }
         }
     </style>
@@ -216,11 +194,11 @@
             {% for song in recommendations %}
                 <div class="song-card" id="song{{ forloop.counter }}">
                     <!-- Song Title and Artist -->
-                    <h2>{{ song.name }} by {{ song.artist|join:", " }}</h2>
+                    <h2>{{ song.name }} by {{ song.artist }}</h2>
                     
                     <!-- Song Image -->
                     {% if song.image %}
-                        <img src="{{ song.image }}" alt="{{ song.name }}">
+                        <a href="{{ song.link }}" target="_blank"><img src="{{ song.image }}" alt="{{ song.name }}"></a>
                     {% else %}
                         <p>No image available.</p>
                     {% endif %}
@@ -258,13 +236,13 @@
                         <!-- Dislike Form -->
                         <form method="GET" action="{% url 'music:recommend' %}">
                             <input type="hidden" name="action" value="dislike">
-                            <!-- Optionally, include song identifier if needed -->
-                            <input type="hidden" name="song_id" value="{{ song.song_id }}">
+                            <input type="hidden" name="song_id" value="{{ song.spotify_id }}">
                             <button type="submit" class="dislike-btn">Dislike</button>
                         </form>
                         <!-- Like Form -->
                         <form method="GET" action="{% url 'music:recommend' %}">
-                            <input type="hidden" name="artist" value="{{ song.artist.0 }}">
+                            <input type="hidden" name="artist" value="{{ song.artist }}">
+                            <input type="hidden" name="stats" value="{{ song.stats }}">
                             <input type="hidden" name="action" value="like">
                             <button type="submit" class="like-btn">Like</button>
                         </form>

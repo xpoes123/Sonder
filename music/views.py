@@ -1,13 +1,10 @@
-# music/views.py
-
+import time
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import RecommendationForm
-from .services.spotify_service import process_lists, Song
+from .models import Song
+from .services.spotify_service import process_lists
 from .services.generative_ai_service import get_dating_profile, parse_dating_profile
-from django.conf import settings
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 import logging
 
 # Configure logging
@@ -15,51 +12,72 @@ logger = logging.getLogger(__name__)
 
 def home(request):
     form = RecommendationForm()
-    # Optionally clear seed_artists when accessing home
     if 'seed_artists' in request.session:
         del request.session['seed_artists']
     return render(request, 'music/home.html', {'form': form})
 
 def recommend(request):
     if request.method == 'POST':
-        # Initial recommendation based on user input
         form = RecommendationForm(request.POST)
         if form.is_valid():
-            # Collect all artist inputs
-            artists = []
-            for i in range(1, 6):
-                artist = form.cleaned_data.get(f'artist_{i}')
-                if artist:
-                    artists.append(artist.strip())
+            artists = [form.cleaned_data[f'artist_{i}'].strip() for i in range(1, 6) if form.cleaned_data.get(f'artist_{i}')]
             
-            # Check if at least one artist is provided
             if not artists:
                 messages.error(request, "Please enter at least one artist.")
                 return redirect('music:home')
             
             try:
-                # Initialize the seed artists in the session
                 seed_artists = artists.copy()
                 request.session['seed_artists'] = seed_artists
 
-                # Process the seed artists to get Song objects
+                song_objects = []
                 for _ in range(20):
-                    song_objects = process_lists(seed_artists)
-                    if len(song_objects) == 1:
+                    recommended_songs = process_lists(seed_artists)
+                    if recommended_songs:
+                        for song_data in recommended_songs:
+                            # Check if song is already in the database
+                            song, created = Song.objects.get_or_create(
+                                spotify_id=song_data.song_id,
+                                defaults={
+                                    'name': song_data.name,
+                                    'artist': song_data.artist[0] if song_data.artist else '',  # First artist or empty string
+                                    'acoustic': song_data.stats[0],
+                                    'dance': song_data.stats[1],
+                                    'duration': song_data.stats[2],
+                                    'energy': song_data.stats[3],
+                                    'instrumental': song_data.stats[4],
+                                    'key': song_data.stats[5],
+                                    'liveness': song_data.stats[6],
+                                    'loud': song_data.stats[7],
+                                    'mode': song_data.stats[8],
+                                    'speech': song_data.stats[9],
+                                    'tempo': song_data.stats[10],
+                                    'valence': song_data.stats[11],
+                                    'popularity': song_data.stats[12],
+                                    'image': song_data.image,  # Assume process_lists provides image and preview
+                                    'preview': song_data.preview,
+                                    'link': song_data.link,
+                                }
+                            )
+                            
+                            # Generate and save dating profile if newly created or profile is missing
+                            if created or not song.dating_profile:
+                                dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
+                                profile_data = parse_dating_profile(dating_profile_text)
+                                song.dating_profile = profile_data
+                                song.save()
+                                
+                            song_objects.append(song)
+
                         break
+                    time.sleep(0.25)
                 else:
                     messages.info(request, "No recommendations found based on your seed artists.")
                     return redirect('music:home')
 
-                # Generate dating profiles for each song
-                for song in song_objects:
-                    dating_profile_text = get_dating_profile(song.name, song.artist[0], song.stats)
-                    profile_data = parse_dating_profile(dating_profile_text)
-                    song.dating_profile = profile_data  # Attach profile data to the song object
-
                 context = {
                     'recommendations': song_objects,
-                    'seed_artists': seed_artists,  # Ensure seed_artists is passed to the template
+                    'seed_artists': seed_artists,
                 }
                 logger.info(f"Generated {len(song_objects)} song recommendations.")
                 return render(request, 'music/recommendations.html', context)
@@ -69,35 +87,63 @@ def recommend(request):
                 messages.error(request, f"An error occurred while processing your request: {e}")
                 return redirect('music:home')
         else:
-            # If form is invalid, redirect back to home with errors
             messages.error(request, "Invalid form submission.")
             return redirect('music:home')
+
     else:
-        # Handle GET request, possibly for additional recommendations
         seed_artists = request.session.get('seed_artists', [])
+        
         if not seed_artists:
             messages.error(request, "No seed artists found. Please provide artists to get recommendations.")
             return redirect('music:home')
 
         try:
-            # Process the current seed artists to get Song objects
+            song_objects = []
             for _ in range(20):
-                song_objects = process_lists(seed_artists)
-                if len(song_objects) == 1:
+                recommended_songs = process_lists(seed_artists)
+                if recommended_songs:
+                    for song_data in recommended_songs:
+                        # Check if song is already in the database
+                        song, created = Song.objects.get_or_create(
+                            spotify_id=song_data.song_id,
+                            defaults={
+                                'name': song_data.name,
+                                'artist': song_data.artist[0] if song_data.artist else '',
+                                'acoustic': song_data.stats[0],
+                                'dance': song_data.stats[1],
+                                'duration': song_data.stats[2],
+                                'energy': song_data.stats[3],
+                                'instrumental': song_data.stats[4],
+                                'key': song_data.stats[5],
+                                'liveness': song_data.stats[6],
+                                'loud': song_data.stats[7],
+                                'mode': song_data.stats[8],
+                                'speech': song_data.stats[9],
+                                'tempo': song_data.stats[10],
+                                'valence': song_data.stats[11],
+                                'popularity': song_data.stats[12],
+                                'image': song_data.image,
+                                'preview': song_data.preview,
+                                'link': song_data.link,
+                            }
+                        )
+                        
+                        # Generate and save dating profile if newly created or profile is missing
+                        if created or not song.dating_profile:
+                            dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
+                            profile_data = parse_dating_profile(dating_profile_text)
+                            song.dating_profile = profile_data
+                            song.save()
+                        song_objects.append(song)
                     break
+                time.sleep(0.2)
             else:
                 messages.info(request, "No recommendations found based on your seed artists.")
                 return redirect('music:home')
 
-            # Generate dating profiles for each song
-            for song in song_objects:
-                dating_profile_text = get_dating_profile(song.name, song.artist[0], song.stats)
-                profile_data = parse_dating_profile(dating_profile_text)
-                song.dating_profile = profile_data  # Attach profile data to the song object
-
             context = {
                 'recommendations': song_objects,
-                'seed_artists': seed_artists,  # Ensure seed_artists is passed to the template
+                'seed_artists': seed_artists,
             }
             logger.info(f"Generated {len(song_objects)} song recommendations using seed artists.")
             return render(request, 'music/recommendations.html', context)
