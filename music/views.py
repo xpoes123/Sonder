@@ -1,8 +1,10 @@
 import time
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from .forms import RecommendationForm, CreateUserForm
 from .models import Song
 from .services.spotify_service import process_lists
@@ -13,10 +15,30 @@ import logging
 logger = logging.getLogger(__name__)
 
 def home(request):
+    return render(request, 'music/home.html', {})
+
+# views.py
+
+def artist_seed(request):
     form = RecommendationForm()
     if 'seed_artists' in request.session:
         del request.session['seed_artists']
-    return render(request, 'music/home.html', {'form': form})
+    
+    if request.method == 'POST':
+        form = RecommendationForm(request.POST)
+        if form.is_valid():
+            artists = [form.cleaned_data[f'artist_{i}'].strip() for i in range(1, 6) if form.cleaned_data.get(f'artist_{i}')]
+            if not artists:
+                messages.error(request, "Please enter at least one artist.")
+                return redirect('music:artist_seed')
+            request.session['seed_artists'] = artists
+            return redirect('music:recommend')
+        else:
+            messages.error(request, "Invalid form submission.")
+            return redirect('music:artist_seed')
+    
+    return render(request, 'music/artist_seed.html', {'form': form})
+
 
 def recommend(request):
     if request.method == 'POST':
@@ -178,3 +200,15 @@ def login_page(request):
             messages.info(request, "Username OR Password is incorrect")
     context = {}
     return render(request, 'music/login.html', context)
+
+def logout_user(request):
+    logout(request)
+    return redirect('music:login')
+
+# music/views.py
+
+def profile(request, user_id):
+    # Retrieve the user object using the user ID
+    user = get_object_or_404(User, id=user_id)
+    # Pass the user object to the template for rendering
+    return render(request, 'music/profile.html', {'profile_user': user})

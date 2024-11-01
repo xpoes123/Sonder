@@ -1,0 +1,177 @@
+.container {
+    width: 90%;
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 15px;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    border-radius: 8px;
+}
+
+/* Song Card Styling */
+.song-card {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    position: relative;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Song Title and Artist */
+.song-card h2 {
+    margin-bottom: 10px;
+    color: #007BFF;
+    font-size: 1.2em;
+}
+
+/* Song Image Styling */
+.song-card img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+/* Audio Player Styling */
+.song-card audio {
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+/* Toggle Dating Profile Button */
+.toggle-profile-btn {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 18px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-profile-btn:hover {
+    background-color: #138496;
+}
+
+/* Dating Profile Section */
+.dating-profile {
+    margin-top: 10px;
+    text-align: left;
+    background-color: #e9ecef;
+    padding: 10px;
+    border-left: 4px solid #17a2b8;
+    border-radius: 4px;
+    display: none;
+    font-size: 0.9em;
+}
+
+/* Recommend Button Styling */
+.nav-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.like-btn, .dislike-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+    min-width: 80px;
+}
+
+.like-btn {
+    background-color: #28a745;
+}
+
+.dislike-btn {
+    background-color: #dc3545;
+}
+
+.like-btn:hover {
+    background-color: #218838;
+}
+
+.dislike-btn:hover {
+    background-color: #c82333;
+}
+
+/* Back Link Styling */
+.back-link {
+    display: block;
+    margin-top: 20px;
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+    transition: color 0.3s ease;
+    font-size: 0.95em;
+}
+
+.back-link:hover {
+    color: #0056b3;
+}
+
+/* Messages Styling */
+.messages {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 15px;
+}
+
+.messages li {
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.messages li.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.messages li.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.messages li.warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.messages li.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Responsive Design Enhancements */
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+        padding: 10px;
+    }
+
+    .nav-buttons {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .like-btn, .dislike-btn {
+        width: 100%;
+        min-width: unset;
+    }
+}

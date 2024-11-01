@@ -1,0 +1,85 @@
+<!-- music/templates/music/artist_seed.html -->
+
+{% extends 'music/base.html' %}
+
+{% block title %}First Recommendations - Sonder{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Welcome to Sonder</h1>
+    <p>List some artists that you like to help our algorithm get started</p>
+    <form method="POST" action="{% url 'music:recommend' %}" id="artist-form">
+        {% csrf_token %}
+        
+        <!-- Artist 1 Input (Always Visible) -->
+        <div class="artist-input" id="artist-input-1">
+            {{ form.artist_1 }}
+        </div>
+        
+        <!-- Artist 2 Input (Hidden Initially) -->
+        <div class="artist-input" id="artist-input-2" style="display: none;">
+            {{ form.artist_2 }}
+        </div>
+        
+        <!-- Artist 3 Input (Hidden Initially) -->
+        <div class="artist-input" id="artist-input-3" style="display: none;">
+            {{ form.artist_3 }}
+        </div>
+        
+        <!-- Artist 4 Input (Hidden Initially) -->
+        <div class="artist-input" id="artist-input-4" style="display: none;">
+            {{ form.artist_4 }}
+        </div>
+        
+        <!-- Artist 5 Input (Hidden Initially) -->
+        <div class="artist-input" id="artist-input-5" style="display: none;">
+            {{ form.artist_5 }}
+        </div>
+
+        <!-- Button Container -->
+        <div class="button-container">
+            <button id="add-artist-btn" type="button">Add Artist</button>
+            <button class="submit-btn" type="submit">Submit</button>
+        </div>
+
+    </form>
+    
+    <!-- Messages Display -->
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</div>
+
+<!-- JavaScript for Revealing Hidden Input Fields -->
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reveal Artist Input Fields
+        const addArtistBtn = document.getElementById('add-artist-btn');
+        const maxArtists = 5;
+        let currentArtist = 1; // Starts with artist-input-1 visible
+
+        addArtistBtn.addEventListener('click', function() {
+            if (currentArtist < maxArtists) {
+                currentArtist += 1;
+                const nextInputDiv = document.getElementById(`artist-input-${currentArtist}`);
+                if (nextInputDiv) {
+                    nextInputDiv.style.display = 'block';
+                }
+
+                // Disable Add Artist button if max artists reached
+                if (currentArtist === maxArtists) {
+                    addArtistBtn.disabled = true;
+                    addArtistBtn.style.backgroundColor = '#6c757d'; // Match disabled state
+                    addArtistBtn.style.cursor = 'not-allowed';
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

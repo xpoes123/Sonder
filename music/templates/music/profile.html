@@ -1,0 +1,34 @@
+{% extends 'music/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'music/css/profile.css' %}">
+{% endblock %}
+
+{% block title %}{{ profile_user.username }}'s Profile - Sonder{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Username Display -->
+    <h2>{{ profile_user.username }}</h2>
+    
+    <!-- Profile Links -->
+    <div class="profile-links">
+        <ul>
+            <li><a href="{% url 'music:home' %}">Liked Songs</a></li>
+            <li><a href="{% url 'music:home' %}">Song Clusters</a></li>
+            <li><a href="{% url 'music:home' %}">Change Stats</a></li>
+            <li><a href="{% url 'music:home' %}">Edit Profile</a></li>
+        </ul>
+    </div>
+
+    <!-- Revolving Picture Gallery -->
+    <div class="liked-songs-gallery">
+        <div class="gallery">
+            {% for i in "1234" %}
+                <img src="{% static 'music/images/temp/temp' %}{{ i }}.jpeg" alt="Liked Song {{ i }}" class="gallery-image">
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

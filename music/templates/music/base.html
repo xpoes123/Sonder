@@ -1,9 +1,8 @@
-<!-- music/templates/music/base.html -->
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Existing head content -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +11,7 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'music/images/favicon/sonder.png' %}">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous">
-
-    <!-- Custom CSS -->
+    <!-- Main CSS -->
     <link rel="stylesheet" type="text/css" href="{% static 'music/css/styles.css' %}">
     
     {% block extra_head %}
@@ -27,16 +20,54 @@
 </head>
 <body>
     <!-- Header -->
-    <header>
-        {% block header %}
+    <!-- Header -->
+<header>
+    {% block header %}
         <nav aria-label="Main Navigation">
-            <ul>
-                <li><a href="{% url 'music:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a></li>
-                <!-- <li><a href="{% url 'music:recommend' %}" class="{% if request.resolver_match.url_name == 'recommend' %}active{% endif %}">Recommendations</a></li> -->
-            </ul> <!-- Added closing tag here -->
+            <!-- Left Navigation Links -->
+            <ul class="nav-left">
+                <li>
+                    <a href="{% url 'music:artist_seed' %}" class="{% if request.resolver_match.url_name == 'artist_seed' %}active{% endif %}">Get Started</a>
+                </li>
+                {% if request.session.seed_artists %}
+                    <li>
+                        <a href="{% url 'music:recommend' %}" class="{% if request.resolver_match.url_name == 'recommend' %}active{% endif %}">Swipe</a>
+                    </li>
+                {% endif %}
+            </ul>
+            
+            <!-- Centered Title and Logo -->
+            <div class="nav-center">
+                <h1 class="site-title">SONDER</h1>
+                <div class="logo">
+                    <a href="{% url 'music:home' %}">
+                        <img src="{% static 'music/images/sonder.png' %}" alt="Sonder Logo">
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Right Navigation Links -->
+            <ul class="nav-right">
+                {% if user.is_authenticated %}
+                    <li>
+                        <a href="{% url 'music:profile' user.id %}" class="username-link">Hello, {{ user.username }}!</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'music:logout' %}">Logout</a>
+                    </li>
+                {% else %}
+                    <li>
+                        <a href="{% url 'music:login' %}" class="{% if request.resolver_match.url_name == 'music:login' %}active{% endif %}">Login</a>
+                    </li>
+                    <li>
+                        <a href="{% url 'music:register' %}" class="{% if request.resolver_match.url_name == 'music:register' %}active{% endif %}">Register</a>
+                    </li>
+                {% endif %}
+            </ul>
         </nav>
-        {% endblock %}
-    </header>
+    {% endblock %}
+</header>
+
     
     <!-- Main Content -->
     <main>
@@ -52,7 +83,7 @@
         {% endblock %}
     </footer>
     
-    <!-- JavaScript (Optional: Place before closing body tag) -->
+    <!-- JavaScript -->
     {% block extra_js %}
     <!-- Additional JavaScript can be added by extending templates -->
     {% endblock %}

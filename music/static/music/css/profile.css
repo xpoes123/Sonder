@@ -1,0 +1,88 @@
+/* Profile Container Styles */
+.container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Profile Links Styles */
+.profile-links ul {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+.profile-links ul li {
+    display: inline;
+    margin-right: 15px;
+}
+
+.profile-links ul li a {
+    text-decoration: none;
+    color: #3498db;
+    font-weight: bold;
+}
+
+.profile-links ul li a:hover {
+    color: #2980b9;
+}
+
+/* Liked Songs Gallery Styles */
+.liked-songs-gallery {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.gallery {
+    position: relative;
+    width: 200px;  /* Adjust as needed */
+    height: 200px; /* Adjust as needed */
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.gallery-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    border-radius: 8px;
+    opacity: 0;
+    animation: slideshow__fade 16s infinite;
+}
+
+/* Define animation delay for each image */
+.gallery-image:nth-child(1) {
+    animation-delay: 0s;
+}
+.gallery-image:nth-child(2) {
+    animation-delay: 4s;
+}
+.gallery-image:nth-child(3) {
+    animation-delay: 8s;
+}
+.gallery-image:nth-child(4) {
+    animation-delay: 12s;
+}
+
+/* Keyframes for smooth fade-in and fade-out */
+@keyframes slideshow__fade {  
+    0% {
+        opacity: 0;
+        animation-timing-function: ease-in;
+    }
+    12% {
+        opacity: 1;
+        animation-timing-function: ease-out;
+    }
+    20% {
+        opacity: 1;
+    }
+    28% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
