@@ -1,7 +1,6 @@
 # music/services/musixmatch_service.py
 
 import requests
-import json
 
 # Musixmatch API base URL and API key
 BASE_URL = "https://api.musixmatch.com/ws/1.1/"

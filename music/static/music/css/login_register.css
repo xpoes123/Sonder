@@ -1,0 +1,58 @@
+.login_register_button {
+    appearance: button;
+    backface-visibility: hidden;
+    background-color: #405cf5;
+    border-radius: 6px;
+    border-width: 0;
+    box-shadow: rgba(50, 50, 93, 0.1) 0 0 0 1px inset, rgba(50, 50, 93, 0.1) 0 2px 5px 0, rgba(0, 0, 0, 0.07) 0 1px 1px 0;
+    box-sizing: border-box;
+    color: #fff;
+    cursor: pointer;
+    font-family: -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Ubuntu, sans-serif;
+    font-size: 100%;
+    height: 44px;
+    line-height: 1.15;
+    margin: 12px 0 0;
+    outline: none;
+    overflow: hidden;
+    padding: 0 25px;
+    position: relative;
+    text-align: center;
+    text-transform: none;
+    transform: translateZ(0);
+    transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    width: 50%;
+  }
+  
+  .login_register_button:hover {
+    background-color: #3a4edc; /* Slightly darker background on hover */
+    box-shadow: rgba(50, 50, 93, 0.1) 0 0 0 1px inset, rgba(50, 50, 93, 0.15) 0 4px 10px 0, rgba(0, 0, 0, 0.1) 0 2px 2px 0;
+    transform: scale(1.05); /* Scale up slightly on hover */
+  }
+  
+  .login_register_button:active {
+    transform: scale(0.98); /* Pressed-down effect */
+    background-color: #334acc; /* Darker color on active */
+  }
+  
+  .login_register_button:focus {
+    box-shadow: rgba(50, 50, 93, 0.1) 0 0 0 1px inset, rgba(50, 50, 93, 0.2) 0 6px 15px 0, rgba(0, 0, 0, 0.1) 0 2px 2px 0, rgba(50, 151, 211, 0.3) 0 0 0 4px;
+  }
+  
+  /* Animation for smooth transitions */
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.02);
+    }
+  }
+  
+  .login_register_button:hover {
+    animation: pulse 1s infinite; /* Pulse animation on hover */
+  }
+  

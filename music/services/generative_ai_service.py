@@ -107,7 +107,6 @@ def get_dating_profile(song_name, artist_name, stats):
     )
 
     chat_session = model.start_chat(history=[])
-
     cats = random.sample(CATEGORIES, 3)
     print(cats)
 

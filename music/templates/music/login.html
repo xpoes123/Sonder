@@ -1,7 +1,9 @@
-<!-- music/templates/music/login.html -->
-
 {% extends 'music/base.html' %}
+{% load static %}
 
+{% block extra_head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'music/css/login_register.css' %}">
+{% endblock %}
 {% block title %}Login - Sonder{% endblock %}
 
 {% block content %}
@@ -9,7 +11,7 @@
     <div class="d-flex justify-content-center">
         <h3 id="form-title">LOGIN</h3>
     </div>
-    <div class="d-flex justify-content-center form_container">
+    <div class="form_container">
         <form method="POST" action="">
             {% csrf_token %}
             <div class="user-input">
@@ -25,8 +27,8 @@
                 <input type="password" name="password" placeholder="Password" class="form-control">
             </div>
 
-            <div class="d-flex justify-content-center mt-3 login_container">
-                <input class="btn login_btn" type="submit" value="Login">
+            <div class="login_container">
+                <input class="login_register_button" type="submit" value="Login">
             </div>
 
             <!-- Display Django Messages -->

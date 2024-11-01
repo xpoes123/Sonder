@@ -27,13 +27,12 @@
             <!-- Left Navigation Links -->
             <ul class="nav-left">
                 <li>
+                    {% if user.is_authenticated %}
                     <a href="{% url 'music:artist_seed' %}" class="{% if request.resolver_match.url_name == 'artist_seed' %}active{% endif %}">Get Started</a>
+                    {% else %}
+                        <a href="{% url 'music:register' %}" class="login_btn">Get Started</a>
+                    {% endif %}
                 </li>
-                {% if request.session.seed_artists %}
-                    <li>
-                        <a href="{% url 'music:recommend' %}" class="{% if request.resolver_match.url_name == 'recommend' %}active{% endif %}">Swipe</a>
-                    </li>
-                {% endif %}
             </ul>
             
             <!-- Centered Title and Logo -->

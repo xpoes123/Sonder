@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .forms import RecommendationForm, CreateUserForm
-from .models import Song
+from .models import Song, UserLikedSongs, UserDislikedSongs
 from .services.spotify_service import process_lists
 from .services.generative_ai_service import get_dating_profile, parse_dating_profile
 import logging
@@ -17,163 +17,103 @@ logger = logging.getLogger(__name__)
 def home(request):
     return render(request, 'music/home.html', {})
 
-# views.py
-
+@login_required
 def artist_seed(request):
     form = RecommendationForm()
-    if 'seed_artists' in request.session:
-        del request.session['seed_artists']
-    
     if request.method == 'POST':
         form = RecommendationForm(request.POST)
         if form.is_valid():
+            # Collect artist names from the form
             artists = [form.cleaned_data[f'artist_{i}'].strip() for i in range(1, 6) if form.cleaned_data.get(f'artist_{i}')]
             if not artists:
                 messages.error(request, "Please enter at least one artist.")
                 return redirect('music:artist_seed')
+            # Store the artists in the session
             request.session['seed_artists'] = artists
-            return redirect('music:recommend')
+            print(artists)
+            print(request.session.get('seed_artists'))
+            return redirect('music:recommend')  # Redirect to recommend view after setting seed artists
         else:
             messages.error(request, "Invalid form submission.")
-            return redirect('music:artist_seed')
-    
     return render(request, 'music/artist_seed.html', {'form': form})
 
 
+@login_required
 def recommend(request):
-    if request.method == 'POST':
-        form = RecommendationForm(request.POST)
-        if form.is_valid():
-            artists = [form.cleaned_data[f'artist_{i}'].strip() for i in range(1, 6) if form.cleaned_data.get(f'artist_{i}')]
-            if not artists:
-                messages.error(request, "Please enter at least one artist.")
-                return redirect('music:home')
-            try:
-                seed_artists = artists.copy()
-                request.session['seed_artists'] = seed_artists
-                song_objects = []
-                for _ in range(20):
-                    recommended_songs = process_lists(seed_artists)
-                    if recommended_songs:
-                        for song_data in recommended_songs:
-                            # Check if song is already in the database
-                            song, created = Song.objects.get_or_create(
-                                spotify_id=song_data.song_id,
-                                defaults={
-                                    'name': song_data.name,
-                                    'artist': song_data.artist[0] if song_data.artist else '',
-                                    'acoustic': song_data.stats[0],
-                                    'dance': song_data.stats[1],
-                                    'duration': song_data.stats[2],
-                                    'energy': song_data.stats[3],
-                                    'instrumental': song_data.stats[4],
-                                    'key': song_data.stats[5],
-                                    'liveness': song_data.stats[6],
-                                    'loud': song_data.stats[7],
-                                    'mode': song_data.stats[8],
-                                    'speech': song_data.stats[9],
-                                    'tempo': song_data.stats[10],
-                                    'valence': song_data.stats[11],
-                                    'popularity': song_data.stats[12],
-                                    'image': song_data.image,
-                                    'preview': song_data.preview,
-                                    'link': song_data.link,
-                                }
-                            )
-                            
-                            # Generate and save dating profile if newly created or profile is missing
-                            if created or not song.dating_profile:
-                                dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
-                                profile_data = parse_dating_profile(dating_profile_text)
-                                song.dating_profile = profile_data
-                                song.save()
-                                
-                            song_objects.append(song)
+    # Fetch seed artists from session
+    seed_artists = request.session.get('seed_artists')
+    if not seed_artists:
+        messages.error(request, "No seed artists found. Please provide artists to get recommendations.")
+        return redirect('music:artist_seed')
 
-                        break
-                    time.sleep(0.25)
-                else:
-                    messages.info(request, "No recommendations found based on your seed artists.")
-                    return redirect('music:home')
+    # Handle "like" and "dislike" actions
+    action = request.GET.get('action')
+    spotify_id = request.GET.get('song_id')
+    if action and spotify_id:
+        # Get or create UserLikedSongs instance
+        user_liked_songs, created = UserLikedSongs.objects.get_or_create(user=request.user)
+        user_disliked_songs, created = UserDislikedSongs.objects.get_or_create(user=request.user)
+        # Perform "like" or "dislike" action
+        if action == 'like':
+            if not user_liked_songs.is_song_liked(spotify_id):
+                user_liked_songs.add_song(spotify_id)
+                messages.success(request, "You have liked the song.")
+            if user_disliked_songs.is_song_disliked(spotify_id):
+                user_disliked_songs.remove_song(spotify_id)
+                messages.success(request, "You have previously liked this song, do you wish to dislike?")
+        elif action == 'dislike':
+            if not user_disliked_songs.is_song_disliked(spotify_id):
+                user_disliked_songs.add_song(spotify_id)
+                messages.success(request, "You have disliked the song.")
+            if user_liked_songs.is_song_liked(spotify_id):
+                user_liked_songs.remove_song(spotify_id)
+                messages.success(request, "You have previously liked this song, do you wish to dislike?")
 
-                context = {
-                    'recommendations': song_objects,
-                    'seed_artists': seed_artists,
+        return redirect('music:recommend')
+
+    # Generate recommendations without modifying liked_songs
+    song_objects = []
+    recommended_songs = process_lists(seed_artists)
+    if recommended_songs:
+        for song_data in recommended_songs:
+            # Retrieve or create song by spotify_id for displaying recommendations only
+            song, created = Song.objects.get_or_create(
+                spotify_id=song_data.song_id,
+                defaults={
+                    'name': song_data.name,
+                    'artist': song_data.artist[0] if song_data.artist else '',
+                    'acoustic': song_data.stats[0],
+                    'dance': song_data.stats[1],
+                    'duration': song_data.stats[2],
+                    'energy': song_data.stats[3],
+                    'instrumental': song_data.stats[4],
+                    'key': song_data.stats[5],
+                    'liveness': song_data.stats[6],
+                    'loud': song_data.stats[7],
+                    'mode': song_data.stats[8],
+                    'speech': song_data.stats[9],
+                    'tempo': song_data.stats[10],
+                    'valence': song_data.stats[11],
+                    'popularity': song_data.stats[12],
+                    'image': song_data.image,
+                    'preview': song_data.preview,
+                    'link': song_data.link,
                 }
-                logger.info(f"Generated {len(song_objects)} song recommendations.")
-                return render(request, 'music/recommendations.html', context)
+            )
+            # Generate and save dating profile if newly created or profile is missing
+            if created or not song.dating_profile:
+                dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
+                profile_data = parse_dating_profile(dating_profile_text)
+                song.dating_profile = profile_data
+                song.save()
+            song_objects.append(song)
 
-            except Exception as e:
-                logger.error(f"Error in recommend view (POST): {e}")
-                messages.error(request, f"An error occurred while processing your request: {e}")
-                return redirect('music:home')
-        else:
-            messages.error(request, "Invalid form submission.")
-            return redirect('music:home')
+    context = {
+        'recommendations': song_objects,
+        'seed_artists': seed_artists,
+    }
+    return render(request, 'music/recommendations.html', context)
 
-    else:
-        seed_artists = request.session.get('seed_artists', [])
-        
-        if not seed_artists:
-            messages.error(request, "No seed artists found. Please provide artists to get recommendations.")
-            return redirect('music:home')
-
-        try:
-            song_objects = []
-            for _ in range(20):
-                recommended_songs = process_lists(seed_artists)
-                if recommended_songs:
-                    for song_data in recommended_songs:
-                        # Check if song is already in the database
-                        song, created = Song.objects.get_or_create(
-                            spotify_id=song_data.song_id,
-                            defaults={
-                                'name': song_data.name,
-                                'artist': song_data.artist[0] if song_data.artist else '',
-                                'acoustic': song_data.stats[0],
-                                'dance': song_data.stats[1],
-                                'duration': song_data.stats[2],
-                                'energy': song_data.stats[3],
-                                'instrumental': song_data.stats[4],
-                                'key': song_data.stats[5],
-                                'liveness': song_data.stats[6],
-                                'loud': song_data.stats[7],
-                                'mode': song_data.stats[8],
-                                'speech': song_data.stats[9],
-                                'tempo': song_data.stats[10],
-                                'valence': song_data.stats[11],
-                                'popularity': song_data.stats[12],
-                                'image': song_data.image,
-                                'preview': song_data.preview,
-                                'link': song_data.link,
-                            }
-                        )
-                        
-                        # Generate and save dating profile if newly created or profile is missing
-                        if created or not song.dating_profile:
-                            dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
-                            profile_data = parse_dating_profile(dating_profile_text)
-                            song.dating_profile = profile_data
-                            song.save()
-                        song_objects.append(song)
-                    break
-                time.sleep(0.25)
-                print(f"Attempt {_} failed, trying again")
-            else:
-                messages.info(request, "No recommendations found based on your seed artists.")
-                return redirect('music:home')
-
-            context = {
-                'recommendations': song_objects,
-                'seed_artists': seed_artists,
-            }
-            logger.info(f"Generated {len(song_objects)} song recommendations using seed artists.")
-            return render(request, 'music/recommendations.html', context)
-
-        except Exception as e:
-            logger.error(f"Error in recommend view (GET): {e}")
-            messages.error(request, f"An error occurred while processing your request: {e}")
-            return redirect('music:home')
 
 
 def register(request):

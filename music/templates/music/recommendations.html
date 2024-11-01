@@ -59,6 +59,7 @@
                         <form method="GET" action="{% url 'music:recommend' %}">
                             <input type="hidden" name="artist" value="{{ song.artist }}">
                             <input type="hidden" name="stats" value="{{ song.stats }}">
+                            <input type="hidden" name="song_id" value="{{ song.spotify_id }}">
                             <input type="hidden" name="action" value="like">
                             <button type="submit" class="like-btn">Like</button>
                         </form>
