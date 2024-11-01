@@ -1,0 +1,232 @@
+/* Container Styling */
+header {
+    background-color: #ffffff;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333333;
+    font-weight: bold;
+}
+
+nav ul li a.active {
+    color: #007BFF;
+    border-bottom: 2px solid #007BFF;
+}
+
+footer {
+    background-color: #ffffff;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 40px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+.container {
+    width: 90%;
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 25px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Heading */
+.container h1 {
+    margin-bottom: 20px;
+    color: #333333;
+    font-size: 1.8em;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Input Fields */
+.artist-input {
+    position: relative;
+}
+
+.artist-input input {
+    width: 80%;
+    padding: 12px 15px;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+}
+
+.artist-input input:focus {
+    border-color: #007BFF;
+    outline: none;
+}
+
+/* Add Artist Button */
+#add-artist-btn {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#add-artist-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+#add-artist-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Submit Button */
+.submit-btn {
+    padding: 12px 20px;
+    background-color: #007BFF;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: #0069d9;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+    }
+
+    .container h1 {
+        font-size: 1.5em;
+    }
+
+    #add-artist-btn, .submit-btn {
+        font-size: 0.95em;
+        padding: 10px 18px;
+    }
+}
+
+.user_card {
+    width: 90%;
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 25px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.form_container {
+    margin-top: 20px;
+}
+
+#form-title{
+    color: black;
+}
+
+.login_btn {
+    width: 100%;
+    background: #33ccff !important;
+    color: black !important;
+}
+
+.login_btn:focus {
+    box-shadow: none !important;
+    outline: 0px !important;
+}
+
+.login_container {
+    padding: 0 2rem;
+}
+
+.input-group-text {
+    background: #f7ba5b !important;
+    color: black !important;
+    border: 0 !important;
+    border-radius: 0.5rem 0 0 0.5rem !important;
+}
+.input_user,
+.input_pass:focus {
+    box-shadow: none !important;
+    outline: 0px !important;
+}
+
+/* Messages Styling */
+.messages {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.messages li {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-size: 0.95em;
+}
+
+.messages li.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.messages li.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.messages li.warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.messages li.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Updated Error Box Styling */
+.error-box {
+    position: relative;
+    background-color: #f8d7da; /* Light red background */
+    border-left: 6px solid #f5c6cb; /* Darker red border on the left */
+    padding: 16px 24px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    color: #721c24; /* Dark red text */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 0.5s ease-in-out;
+    text-align: left; /* Align text to the left */
+}
+
+/* Remove Close Button Styles */
+.close-btn {
+    display: none;
+}

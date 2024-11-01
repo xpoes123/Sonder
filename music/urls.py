@@ -8,4 +8,6 @@ app_name = 'music'
 urlpatterns = [
     path('', views.home, name='home'),
     path('recommend/', views.recommend, name='recommend'),
+    path('register/', views.register, name = "register"),
+    path('login/', views.login_page, name = "login"),
 ]

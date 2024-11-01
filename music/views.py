@@ -1,7 +1,9 @@
 import time
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .forms import RecommendationForm
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login, logout
+from .forms import RecommendationForm, CreateUserForm
 from .models import Song
 from .services.spotify_service import process_lists
 from .services.generative_ai_service import get_dating_profile, parse_dating_profile
@@ -21,15 +23,12 @@ def recommend(request):
         form = RecommendationForm(request.POST)
         if form.is_valid():
             artists = [form.cleaned_data[f'artist_{i}'].strip() for i in range(1, 6) if form.cleaned_data.get(f'artist_{i}')]
-            
             if not artists:
                 messages.error(request, "Please enter at least one artist.")
                 return redirect('music:home')
-            
             try:
                 seed_artists = artists.copy()
                 request.session['seed_artists'] = seed_artists
-
                 song_objects = []
                 for _ in range(20):
                     recommended_songs = process_lists(seed_artists)
@@ -40,7 +39,7 @@ def recommend(request):
                                 spotify_id=song_data.song_id,
                                 defaults={
                                     'name': song_data.name,
-                                    'artist': song_data.artist[0] if song_data.artist else '',  # First artist or empty string
+                                    'artist': song_data.artist[0] if song_data.artist else '',
                                     'acoustic': song_data.stats[0],
                                     'dance': song_data.stats[1],
                                     'duration': song_data.stats[2],
@@ -54,7 +53,7 @@ def recommend(request):
                                     'tempo': song_data.stats[10],
                                     'valence': song_data.stats[11],
                                     'popularity': song_data.stats[12],
-                                    'image': song_data.image,  # Assume process_lists provides image and preview
+                                    'image': song_data.image,
                                     'preview': song_data.preview,
                                     'link': song_data.link,
                                 }
@@ -136,7 +135,8 @@ def recommend(request):
                             song.save()
                         song_objects.append(song)
                     break
-                time.sleep(0.2)
+                time.sleep(0.25)
+                print(f"Attempt {_} failed, trying again")
             else:
                 messages.info(request, "No recommendations found based on your seed artists.")
                 return redirect('music:home')
@@ -152,3 +152,29 @@ def recommend(request):
             logger.error(f"Error in recommend view (GET): {e}")
             messages.error(request, f"An error occurred while processing your request: {e}")
             return redirect('music:home')
+
+
+def register(request):
+    form = CreateUserForm()
+    if request.method == "POST":
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Account was created for {form.cleaned_data.get('username')}")
+            return redirect('music:login')
+    context = {'form':form}
+    return render(request, 'music/register.html', context)
+
+def login_page(request):
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('music:home')
+        else:
+            messages.info(request, "Username OR Password is incorrect")
+    context = {}
+    return render(request, 'music/login.html', context)

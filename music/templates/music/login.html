@@ -1,0 +1,54 @@
+<!-- music/templates/music/home.html -->
+
+{% extends 'music/base.html' %}
+
+{% block title %}Home - Sonder{% endblock %}
+
+{% block content %}
+<div class="user_card">
+    <div class="d-flex justify-content-center">
+        <h3 id="form-title">LOGIN</h3>
+    </div>
+    <div class="d-flex justify-content-center form_container">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="input-group mb-3">
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                </div>
+                <input type="username" name="username" placeholder="Username" class="form">
+            </div>
+            <div class="input-group mb-2">
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fas fa-key"></i></span>
+                </div>
+                <input type="password" name="password" placeholder="Password" class="form-control">
+            </div>
+            <div class="d-flex justify-content-center mt-3 login_container">
+                <input class="btn login_btn" type="submit" value="Login">
+            </div>
+        </form>
+        {{form.errors}}
+        {% for message in messages %}
+            <p id="messages">{{message}}</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    /* Because I didn't set placeholder values in forms.py, they will be set here using vanilla JavaScript
+       We start indexing at one because CSRF_token is considered and input fields are indexed accordingly
+    */
+
+    // Query All input fields
+    var form_fields = document.getElementsByTagName('input');
+    form_fields[1].placeholder = 'Username';
+    form_fields[2].placeholder = 'Enter password';
+
+    for (var i = 1; i < form_fields.length; i++) {	
+        form_fields[i].classList.add('form-control');
+    }
+</script>
+{% endblock %}
+{% endblock %}
