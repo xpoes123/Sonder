@@ -3,16 +3,17 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from .forms import RecommendationForm, CreateUserForm
-from .models import Song, UserLikedSongs, UserDislikedSongs
+from .models import Song
 from .services.spotify_service import process_lists
 from .services.generative_ai_service import get_dating_profile, parse_dating_profile
 import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 def home(request):
     return render(request, 'music/home.html', {})
@@ -50,30 +51,42 @@ def recommend(request):
     action = request.GET.get('action')
     spotify_id = request.GET.get('song_id')
     if action and spotify_id:
-        # Get or create UserLikedSongs instance
-        user_liked_songs, created = UserLikedSongs.objects.get_or_create(user=request.user)
-        user_disliked_songs, created = UserDislikedSongs.objects.get_or_create(user=request.user)
-        # Perform "like" or "dislike" action
+        # Get or create related liked and disliked song lists for the user
+        user = request.user
+        song = get_object_or_404(Song, spotify_id=spotify_id)
+
         if action == 'like':
-            if not user_liked_songs.is_song_liked(spotify_id):
-                user_liked_songs.add_song(spotify_id)
+            # Add to liked songs if not already present
+            if not user.liked_songs.filter(id=song.id).exists():
+                user.liked_songs.add(song)
                 messages.success(request, "You have liked the song.")
-            if user_disliked_songs.is_song_disliked(spotify_id):
-                user_disliked_songs.remove_song(spotify_id)
-                messages.success(request, "You have previously liked this song, do you wish to dislike?")
+                
+                # Remove from disliked songs if it exists there
+                if user.disliked_songs.filter(id=song.id).exists():
+                    user.disliked_songs.remove(song)
+                    messages.info(request, "This song was previously disliked; it's now removed from dislikes.")
+                
         elif action == 'dislike':
-            if not user_disliked_songs.is_song_disliked(spotify_id):
-                user_disliked_songs.add_song(spotify_id)
+            # Add to disliked songs if not already present
+            if not user.disliked_songs.filter(id=song.id).exists():
+                user.disliked_songs.add(song)
                 messages.success(request, "You have disliked the song.")
-            if user_liked_songs.is_song_liked(spotify_id):
-                user_liked_songs.remove_song(spotify_id)
-                messages.success(request, "You have previously liked this song, do you wish to dislike?")
+                
+                # Remove from liked songs if it exists there
+                if user.liked_songs.filter(id=song.id).exists():
+                    user.liked_songs.remove(song)
+                    messages.info(request, "This song was previously liked; it's now removed from likes.")
 
         return redirect('music:recommend')
 
     # Generate recommendations without modifying liked_songs
     song_objects = []
-    recommended_songs = process_lists(seed_artists)
+    for _ in range(50):
+        recommended_songs = process_lists(seed_artists)
+        if recommended_songs:
+            break
+        print(f"Attempt {_}")
+        time.sleep(0.25)
     if recommended_songs:
         for song_data in recommended_songs:
             # Retrieve or create song by spotify_id for displaying recommendations only
@@ -121,10 +134,10 @@ def register(request):
     if request.method == "POST":
         form = CreateUserForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, f"Account was created for {form.cleaned_data.get('username')}")
+            user = form.save()
+            messages.success(request, f"Account was created for {user.username}")
             return redirect('music:login')
-    context = {'form':form}
+    context = {'form': form}
     return render(request, 'music/register.html', context)
 
 def login_page(request):
@@ -137,7 +150,7 @@ def login_page(request):
             login(request, user)
             return redirect('music:home')
         else:
-            messages.info(request, "Username OR Password is incorrect")
+            messages.info(request, "Username or Password is incorrect")
     context = {}
     return render(request, 'music/login.html', context)
 
