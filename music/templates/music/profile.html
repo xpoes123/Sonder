@@ -15,9 +15,9 @@
     <!-- Profile Links -->
     <div class="profile-links">
         <ul>
-            <li><a href="{% url 'music:song_list' profile_user.id %}">Liked Songs</a>            </li>
-            <li><a href="{% url 'music:home' %}">Song Clusters</a></li>
-            <li><a href="{% url 'music:home' %}">Change Stats</a></li>
+            <li><a href="{% url 'music:song_list' profile_user.id %}">Liked Songs</a></li>
+            <li><a href="{% url 'music:user_clusters' profile_user.id %}">Song Clusters</a></li>
+            <!-- <li><a href="{% url 'music:home' %}">Change Stats</a></li> -->
             <li><a href="{% url 'music:home' %}">Edit Profile</a></li>
         </ul>
     </div>

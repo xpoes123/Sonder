@@ -1,0 +1,132 @@
+{% extends "music/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'music/css/user_clusters.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ profile_user.username }}'s Song Clusters</h2>
+
+    <script>
+        function toggleCluster(type, id) {
+            console.log(`Toggle cluster type: ${type}, ID: ${id}`); // Debugging statement
+
+            const content = document.getElementById(`${type}-cluster-${id}`);
+            const expandIcon = document.getElementById(`expand-icon-${type}-${id}`);
+
+            if (content) { // Ensure element exists
+                if (content.style.display === "none") {
+                    content.style.display = "block";
+                    expandIcon.textContent = "-";
+                } else {
+                    content.style.display = "none";
+                    expandIcon.textContent = "+";
+                }
+            } else {
+                console.error(`Could not find element with ID: ${type}-cluster-${id}`);
+            }
+        }
+    </script>
+
+    <h3>Liked Clusters</h3>
+    {% if liked_clusters %}
+        {% for cluster in liked_clusters %}
+            {% with forloop.counter0 as cluster_id %}
+                <div class="cluster-card">
+                    <div class="cluster-header" onclick="toggleCluster('liked', '{{ cluster_id }}')">
+                        <h4>{{ cluster.name }}{% if cluster.genre %} - {{ cluster.genre }}{% endif %}</h4>
+                        <span class="expand-icon" id="expand-icon-liked-{{ cluster_id }}">+</span>
+                    </div>
+                    <div class="cluster-content" id="liked-cluster-{{ cluster_id }}" style="display: none;">
+                        <p><strong>Center:</strong> {{ cluster.centroid }}</p>
+                        <table class="song-table">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Song Title</th>
+                                    <th>Artist</th>
+                                    <th>Acousticness</th>
+                                    <th>Danceability</th>
+                                    <th>Liveness</th>
+                                    <th>Tempo</th>
+                                    <th>Valence</th>
+                                    <th>Popularity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for song in cluster.songs %}
+                                    <tr>
+                                        <td><img src="{{ song.image }}" alt="Album cover" width="64" height="64"></td>
+                                        <td>{{ song.title }}</td>
+                                        <td>{{ song.artist }}</td>
+                                        <td>{{ song.acousticness }}</td>
+                                        <td>{{ song.danceability }}</td>
+                                        <td>{{ song.liveness }}</td>
+                                        <td>{{ song.tempo }}</td>
+                                        <td>{{ song.valence }}</td>
+                                        <td>{{ song.popularity }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    {% else %}
+        <p>No liked clusters available.</p>
+    {% endif %}
+
+    <!-- Disliked Clusters -->
+    <h3>Disliked Clusters</h3>
+    {% if disliked_clusters %}
+        {% for cluster in disliked_clusters %}
+            {% with forloop.counter0 as cluster_id %}
+                <div class="cluster-card">
+                    <div class="cluster-header" onclick="toggleCluster('disliked', '{{ cluster_id }}')">
+                        <h4>{{ cluster.name }}</h4>
+                        <span class="expand-icon" id="expand-icon-disliked-{{ cluster_id }}">+</span>
+                    </div>
+                    <div class="cluster-content" id="disliked-cluster-{{ cluster_id }}" style="display: none;">
+                        <p><strong>Center:</strong> {{ cluster.centroid }}</p>
+                        <table class="song-table">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Song Title</th>
+                                    <th>Artist</th>
+                                    <th>Acousticness</th>
+                                    <th>Danceability</th>
+                                    <th>Liveness</th>
+                                    <th>Tempo</th>
+                                    <th>Valence</th>
+                                    <th>Popularity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for song in cluster.songs %}
+                                    <tr>
+                                        <td><img src="{{ song.image }}" alt="Album cover" width="64" height="64"></td>
+                                        <td>{{ song.title }}</td>
+                                        <td>{{ song.artist }}</td>
+                                        <td>{{ song.acousticness }}</td>
+                                        <td>{{ song.danceability }}</td>
+                                        <td>{{ song.liveness }}</td>
+                                        <td>{{ song.tempo }}</td>
+                                        <td>{{ song.valence }}</td>
+                                        <td>{{ song.popularity }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    {% else %}
+        <p>No disliked clusters available.</p>
+    {% endif %}
+</div>
+{% endblock %}

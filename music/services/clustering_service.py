@@ -103,7 +103,3 @@ def cluster(user):
         user_cluster.liked_clusters = liked_clusters
         user_cluster.disliked_clusters = disliked_clusters
         user_cluster.save()
-
-    print(f"Updated clusters for user {user.username}.")
-    print(f"Liked clusters: {liked_clusters}")
-    print(f"Disliked clusters: {disliked_clusters}")

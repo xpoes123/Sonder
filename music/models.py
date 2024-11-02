@@ -28,3 +28,10 @@ class Song(models.Model):
 
     def __str__(self):
         return f"{self.name} by {self.artist}"
+    
+class Cluster(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    genre = models.CharField(max_length=255, blank=True)
+    
+    def __str__(self):
+        return f"{self.name} is {self.genre}"

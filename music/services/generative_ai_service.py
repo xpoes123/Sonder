@@ -151,3 +151,39 @@ def get_dating_profile(song_name, artist_name, stats):
     
     response = chat_session.send_message(real_message)
     return response.text
+
+def get_phrase_from_cluster(cluster_name):
+    """
+    Generates a dating profile based on song information using Google Generative AI.
+    """
+    genai.configure(api_key=os.getenv("GENAI_API_KEY"))  # Move API key to .env
+
+    # Create the model
+    generation_config = {
+        "temperature": 1,
+        "top_p": 0.95,
+        "top_k": 64,
+        "max_output_tokens": 8192,
+        "response_mime_type": "text/plain",
+    }
+
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        generation_config=generation_config,
+        safety_settings={
+            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+        }
+    )
+
+    chat_session = model.start_chat(history=[])
+    
+    message = (
+        f"You are given 6 words that describe a genre vector with the stats acousticness, danceability, liveness, tempo, valence, and populiarty"
+        f"the words are {cluster_name.split("-")}. Using these descriptive words, make a name for a genre that this might describe. Keep the maximum"
+        f"number of words of the genre to be 4 words. And when you respond do not explain your thought process, please only respond with the genre name."
+    )
+    response = chat_session.send_message(message)
+    return response.text

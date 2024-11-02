@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from .forms import RecommendationForm, CreateUserForm
-from .models import Song
+from .models import Song, Cluster
 from .services.spotify_service import process_lists
-from .services.generative_ai_service import get_dating_profile, parse_dating_profile
+from .services.generative_ai_service import get_dating_profile, parse_dating_profile, get_phrase_from_cluster
 from .services.clustering_service import cluster
 import logging
 import numpy as np
@@ -56,7 +56,9 @@ def recommend(request):
         song = get_object_or_404(Song, spotify_id=spotify_id)
         
         # Run clustering if needed
-        if user.get_song_count() % 1 == 0:
+        print(user.get_song_count())
+        if user.get_song_count() % 5 == 0:
+            print("Clustering")
             cluster(user)
         
         if action == 'like':
@@ -105,13 +107,21 @@ def recommend(request):
                 
                 # Check if the song vector is in a liked cluster and not in a disliked cluster
                 if user.get_song_count() > 25:
-                    if (not is_in_disliked_clusters(song_vector, disliked_clusters) and is_in_liked_clusters(song_vector, liked_clusters)):
+                    if random.randint(0,100) < 60 and (not is_in_disliked_clusters(song_vector, disliked_clusters) and is_in_liked_clusters(song_vector, liked_clusters)):
                         song_objects.append(create_or_update_song(song_data))
                         context = {
                             'recommendations': song_objects,
                             'seed_artists': seed_artists,
                         }
                         print("Recommended")
+                        return render(request, 'music/recommendations.html', context)
+                    elif random.randint(0,100) < 60:
+                        song_objects.append(create_or_update_song(song_data))
+                        context = {
+                            'recommendations': song_objects,
+                            'seed_artists': seed_artists,
+                        }
+                        print("Fake Recommended")
                         return render(request, 'music/recommendations.html', context)
                     else:
                         print(f"Song not in recommendation")
@@ -145,7 +155,7 @@ def is_in_liked_clusters(song_vector, liked_clusters):
         distance = np.linalg.norm(song_vector - centroid)
         
         # Check if the distance is within the specified radius
-        if distance <= entry['radius'] * 1.25:
+        if distance <= entry['radius']:
             return True
     return False
 
@@ -160,7 +170,7 @@ def is_in_disliked_clusters(song_vector, disliked_clusters):
         distance = np.linalg.norm(song_vector - centroid)
         
         # Check if the distance is within the specified radius
-        if distance <= entry['radius'] * 0.75:
+        if distance <= entry['radius']:
             return True
     return False
 
@@ -294,3 +304,141 @@ def remove_disliked_song(request, user_id, song_id):
         user.disliked_songs.remove(song)
         messages.success(request, f"{song.name} was removed from your disliked songs.")
     return redirect(f'/profile/{user_id}/liked_songs/?view=disliked')
+
+def get_user_cluster(centroid):
+    """Creates or retrieves a cluster for the user with a classified name."""
+    
+    # Define the classification scheme
+    classification_scheme = {
+        "acousticness": ["Synthetic", "Mild", "Organic", "Pure"],
+        "danceability": ["Dead", "Stiff", "Groovy", "Danceable"],
+        "liveness": ["Studio", "Muted", "Lively", "Live"],
+        "tempo": ["Slow", "Mellow", "Upbeat", "Fast"],
+        "valence": ["Gloomy", "Neutral", "Happy", "Joyful"],
+        "popularity": ["Niche", "Hidden", "Known", "Basic"],
+    }
+
+    def classify_value(attribute, value):
+        """Classify a numeric attribute into one of four categories."""
+        ranges = [0.25, 0.5, 0.75, 1.0]
+        for i, threshold in enumerate(ranges):
+            if value < threshold:
+                return classification_scheme[attribute][i]
+        return classification_scheme[attribute][-1]  # Default to last category
+
+    # Generate classification name based on centroid values
+    attributes = ["acousticness", "danceability", "liveness", "tempo", "valence", "popularity"]
+    classification_name = "-".join(
+        classify_value(attr, centroid[idx]) for idx, attr in enumerate(attributes)
+    )
+
+    # Check if a cluster with the same classification name exists
+    existing_cluster = Cluster.objects.filter(name=classification_name).first()
+
+    if existing_cluster:
+        return existing_cluster.genre  # Return existing cluster if found
+
+    # If no existing cluster, create a new one with a generated name
+    name = get_phrase_from_cluster(classification_name)
+    cluster = Cluster(name=classification_name, genre=name)
+    cluster.save()
+    return cluster.genre
+
+def is_song_in_cluster(song, centroid, radius=0.15):  # Increased tolerance for testing
+    """
+    Determines if a song belongs to a cluster based on a tolerance.
+    Adjust the tolerance to make clustering more or less strict.
+    """
+    # Create song vector with normalized values and rounding for consistency
+    song_vector = [
+        round(song.acoustic, 2),
+        round(song.dance, 2),
+        round(song.liveness, 2),
+        round((song.tempo - 50) / 200, 2),
+        round(song.valence, 2),
+        round(song.popularity / 100 if song.popularity is not None else 0, 2)
+    ]
+    
+    # Calculate distance between the song vector and the cluster centroid
+    distance = np.linalg.norm(np.array(song_vector) - np.array(centroid))
+    
+    # Debugging output to check values and distance
+    # print(f"Checking song '{song.name}' with vector {song_vector} against centroid {centroid}")
+    # print(f"Distance: {distance}, Tolerance: {radius}")
+    
+    return distance <= radius
+
+def user_cluster_view(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user_cluster = user.user_cluster  # Assuming a one-to-one relationship with UserCluster
+
+    # Retrieve liked and disliked clusters from JSON fields
+    liked_clusters = user_cluster.liked_clusters or []
+    disliked_clusters = user_cluster.disliked_clusters or []
+
+    liked_cluster_instances = []
+    for cluster in liked_clusters:
+        # Get cluster name and rounded centroid
+        cluster_name = get_user_cluster(cluster['centroid'])
+        rounded_centroid = [round(val, 2) for val in cluster['centroid']]
+        radius = cluster['radius']
+        
+        # Find songs in the user's liked songs that belong to this cluster
+        cluster_songs = []
+        for song in user.liked_songs.all():
+            if is_song_in_cluster(song, rounded_centroid, radius):  # Pass rounded centroid
+                cluster_songs.append({
+                    "image": song.image,
+                    "title": song.name,
+                    "artist": song.artist,
+                    "acousticness": round(song.acoustic, 2),
+                    "danceability": round(song.dance, 2),
+                    "liveness": round(song.liveness, 2),
+                    "tempo": round((song.tempo - 50) / 200, 2),
+                    "valence": round(song.valence, 2),
+                    "popularity": round(song.popularity / 100, 2) if song.popularity is not None else 0
+                })
+        
+        # Append each cluster with its name, centroid, and associated songs
+        liked_cluster_instances.append({
+            "name": cluster_name,
+            "centroid": rounded_centroid,
+            "songs": cluster_songs
+        })
+    
+    disliked_cluster_instances = []
+    for cluster in disliked_clusters:
+        # Get cluster name and rounded centroid
+        cluster_name = get_user_cluster(cluster['centroid'])
+        rounded_centroid = [round(val, 2) for val in cluster['centroid']]
+        radius = cluster['radius']
+        
+        # Find songs in the user's liked songs that belong to this cluster
+        cluster_songs = []
+        for song in user.disliked_songs.all():
+            if is_song_in_cluster(song, rounded_centroid, radius):  # Pass rounded centroid
+                cluster_songs.append({
+                    "image": song.image,
+                    "title": song.name,
+                    "artist": song.artist,
+                    "acousticness": round(song.acoustic, 2),
+                    "danceability": round(song.dance, 2),
+                    "liveness": round(song.liveness, 2),
+                    "tempo": round((song.tempo - 50) / 200, 2),
+                    "valence": round(song.valence, 2),
+                    "popularity": round(song.popularity / 100, 2) if song.popularity is not None else 0
+                })
+        
+        # Append each cluster with its name, centroid, and associated songs
+        disliked_cluster_instances.append({
+            "name": cluster_name,
+            "centroid": rounded_centroid,
+            "songs": cluster_songs
+        })
+
+    context = {
+        "profile_user": user,
+        "liked_clusters": liked_cluster_instances,
+        "disliked_clusters": disliked_cluster_instances
+    }
+    return render(request, "music/user_clusters.html", context)

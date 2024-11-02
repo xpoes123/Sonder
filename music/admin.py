@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Song
+from .models import Song, Cluster
 
 admin.site.register(Song)
+admin.site.register(Cluster)
 # admin.site.register(UserLikedSongs)
 # admin.site.register(UserDislikedSongs)
 
