@@ -1,0 +1,151 @@
+{% extends 'music/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" type="text/css" href="{% static 'music/css/song_list.css' %}">
+{% endblock %}
+
+{% block title %}{{ profile_user.username }}'s Songs - Sonder{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{{ profile_user.username }}'s Songs</h2>
+    
+    <!-- Toggle Buttons -->
+    <div class="toggle-buttons">
+        <button onclick="showSongs('liked')" class="like-btn">Liked Songs</button>
+        <button onclick="showSongs('disliked')" class="dislike-btn">Disliked Songs</button>
+    </div>
+    
+    <!-- Liked Songs Table -->
+    <div id="liked-songs-table-container" class="songs-table-container">
+        <table id="liked-songs-table" data-sort-dir="asc">
+            <thead>
+                <tr>
+                    <th>Album</th>
+                    <th onclick="sortTable(1, 'liked-songs-table')">Song</th>
+                    <th onclick="sortTable(2, 'liked-songs-table')">Artist</th>
+                    <th onclick="sortTable(3, 'liked-songs-table')">Acousticness</th>
+                    <th onclick="sortTable(4, 'liked-songs-table')">Danceability</th>
+                    <th onclick="sortTable(5, 'liked-songs-table')">Liveness</th>
+                    <th onclick="sortTable(6, 'liked-songs-table')">Tempo</th>
+                    <th onclick="sortTable(7, 'liked-songs-table')">Valence</th>
+                    <th onclick="sortTable(8, 'liked-songs-table')">Popularity</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for song in liked_songs %}
+                <tr>
+                    <td><img src="{{ song.image }}" alt="Album cover" width="64" height="64"></td>
+                    <td>{{ song.title }}</td>
+                    <td>{{ song.artist }}</td>
+                    <td>{{ song.acousticness }}</td>
+                    <td>{{ song.danceability }}</td>
+                    <td>{{ song.liveness }}</td>
+                    <td>{{ song.tempo }}</td>
+                    <td>{{ song.valence }}</td>
+                    <td>{{ song.popularity }}</td>
+                    <td>
+                        <form action="{% url 'music:remove_liked_song' user_id=profile_user.id song_id=song.spotify_id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="delete-button">&times;</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Disliked Songs Table -->
+    <div id="disliked-songs-table-container" class="songs-table-container" style="display: none;">
+        <table id="disliked-songs-table" data-sort-dir="asc">
+            <thead>
+                <tr>
+                    <th>Album</th>
+                    <th onclick="sortTable(1, 'disliked-songs-table')">Song</th>
+                    <th onclick="sortTable(2, 'disliked-songs-table')">Artist</th>
+                    <th onclick="sortTable(3, 'disliked-songs-table')">Acousticness</th>
+                    <th onclick="sortTable(4, 'disliked-songs-table')">Danceability</th>
+                    <th onclick="sortTable(5, 'disliked-songs-table')">Liveness</th>
+                    <th onclick="sortTable(6, 'disliked-songs-table')">Tempo</th>
+                    <th onclick="sortTable(7, 'disliked-songs-table')">Valence</th>
+                    <th onclick="sortTable(8, 'disliked-songs-table')">Popularity</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for song in disliked_songs %}
+                <tr>
+                    <td><img src="{{ song.image }}" alt="Album cover" width="64" height="64"></td>
+                    <td>{{ song.title }}</td>
+                    <td>{{ song.artist }}</td>
+                    <td>{{ song.acousticness }}</td>
+                    <td>{{ song.danceability }}</td>
+                    <td>{{ song.liveness }}</td>
+                    <td>{{ song.tempo }}</td>
+                    <td>{{ song.valence }}</td>
+                    <td>{{ song.popularity }}</td>
+                    <td>
+                        <form action="{% url 'music:remove_disliked_song' user_id=profile_user.id song_id=song.spotify_id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="delete-button">&times;</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Function to toggle between liked and disliked songs tables
+    function showSongs(type) {
+        // Show the correct table based on type
+        document.getElementById('liked-songs-table-container').style.display = (type === 'liked') ? 'block' : 'none';
+        document.getElementById('disliked-songs-table-container').style.display = (type === 'disliked') ? 'block' : 'none';
+
+        // Toggle active class on buttons
+        document.querySelector('.like-btn').classList.toggle('active', type === 'liked');
+        document.querySelector('.dislike-btn').classList.toggle('active', type === 'disliked');
+    }
+
+    // Automatically display the correct table based on the 'view' query parameter
+    document.addEventListener("DOMContentLoaded", function() {
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view') || 'liked';
+        showSongs(view);
+    });
+
+    // Sorting function for tables
+    function sortTable(columnIndex, tableId) {
+        const table = document.getElementById(tableId);
+        const tbody = table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const isAscending = table.getAttribute("data-sort-dir") === "asc";
+
+        rows.sort((rowA, rowB) => {
+            const cellA = rowA.cells[columnIndex].textContent.trim();
+            const cellB = rowB.cells[columnIndex].textContent.trim();
+
+            const aValue = isNaN(parseFloat(cellA)) ? cellA.toLowerCase() : parseFloat(cellA);
+            const bValue = isNaN(parseFloat(cellB)) ? cellB.toLowerCase() : parseFloat(cellB);
+
+            let comparison = 0;
+            if (typeof aValue === "number" && typeof bValue === "number") {
+                comparison = aValue - bValue;
+            } else {
+                comparison = aValue > bValue ? 1 : -1;
+            }
+
+            return isAscending ? comparison : -comparison;
+        });
+
+        table.setAttribute("data-sort-dir", isAscending ? "desc" : "asc");
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+</script>
+{% endblock %}

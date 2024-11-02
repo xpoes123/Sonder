@@ -13,4 +13,8 @@ urlpatterns = [
     path('login/', views.login_page, name = "login"),
     path('logout/', views.logout_user, name = "logout"),
     path('profile/<int:user_id>/', views.profile, name='profile'),
+    path('profile/<int:user_id>/song_list/', views.song_list, name='song_list'),
+    path('profile/<int:user_id>/liked_songs/remove/<str:song_id>/', views.remove_liked_song, name='remove_liked_song'),
+    path('profile/<int:user_id>/disliked_songs/remove/<str:song_id>/', views.remove_disliked_song, name='remove_disliked_song'),
+
 ]

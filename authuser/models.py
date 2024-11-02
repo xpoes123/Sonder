@@ -3,6 +3,8 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+from django.db.models import JSONField
 
 class CustomUserManager(BaseUserManager):
     def _create_user(self, username, email, password, **extra_fields):
@@ -58,7 +60,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Relationships to songs
     liked_songs = models.ManyToManyField('music.Song', related_name='liked_by_users', blank=True)
     disliked_songs = models.ManyToManyField('music.Song', related_name='disliked_by_users', blank=True)
-        
+    
+    liked_song_count = models.IntegerField(default=0)
+    disliked_song_count = models.IntegerField(default=0)
+
     objects = CustomUserManager()
     
     USERNAME_FIELD = 'username'
@@ -75,3 +80,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def get_short_name(self):
         return self.name or self.username
+    
+    def increment_liked_song_count(self):
+        """Increments the liked song count and checks if recommendations should run."""
+        self.liked_song_count += 1
+        self.save()
+        return self.liked_song_count
+
+    def increment_disliked_song_count(self):
+        """Increments the disliked song count."""
+        self.disliked_song_count += 1
+        self.save()
+        return self.disliked_song_count
+    
+    def get_song_count(self):
+        return self.disliked_song_count + self.liked_song_count
+    
+class UserCluster(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True, related_name='user_cluster')
+    liked_clusters = JSONField(blank=True, null=True)  # Store liked clusters as JSON
+    disliked_clusters = JSONField(blank=True, null=True)  # Store disliked clusters as JSON
+
+    def __str__(self):
+        return f"Cluster data for {self.user.username}"

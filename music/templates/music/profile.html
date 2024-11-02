@@ -15,7 +15,7 @@
     <!-- Profile Links -->
     <div class="profile-links">
         <ul>
-            <li><a href="{% url 'music:home' %}">Liked Songs</a></li>
+            <li><a href="{% url 'music:song_list' profile_user.id %}">Liked Songs</a>            </li>
             <li><a href="{% url 'music:home' %}">Song Clusters</a></li>
             <li><a href="{% url 'music:home' %}">Change Stats</a></li>
             <li><a href="{% url 'music:home' %}">Edit Profile</a></li>
@@ -25,10 +25,21 @@
     <!-- Revolving Picture Gallery -->
     <div class="liked-songs-gallery">
         <div class="gallery">
-            {% for i in "1234" %}
-                <img src="{% static 'music/images/temp/temp' %}{{ i }}.jpeg" alt="Liked Song {{ i }}" class="gallery-image">
+            {% for song in profile_user.liked_songs.all %}
+                <img src="{{ song.image }}" alt="Liked Song {{ song.title }}" class="gallery-image">
+            {% empty %}
+                <p>No liked songs to display.</p>
             {% endfor %}
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const images = document.querySelectorAll(".gallery-image");
+        images.forEach((image, index) => {
+            image.style.animationDelay = `${index * 4}s`;
+        });
+    });
+</script>
 {% endblock %}

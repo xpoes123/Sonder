@@ -1,0 +1,105 @@
+.container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 80%;
+    margin: 20px auto 0 auto;  /* Adds 20px margin at the top */
+}
+
+.songs-table-container {
+    max-height: 600px;      /* Set a max height for the container */
+    overflow-y: auto;       /* Enable vertical scrolling */
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    background-color: #f1f1f1;  /* Keeps the header row distinct when scrolling */
+    z-index: 1;                 /* Ensures header stays on top */
+    cursor: pointer;
+}
+
+th:hover {
+    background-color: #e1e1e1;
+}
+
+tr:nth-child(even) {
+    background-color: #f3f3f3;
+}
+
+tr:hover {
+    background-color: #e9e9e9;
+}
+
+/* Delete button styling */
+.delete-button {
+    background: none;
+    border: none;
+    color: red;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.delete-button:hover {
+    color: darkred;
+}
+
+/* Button styling for like and dislike buttons */
+.like-btn, .dislike-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #fff;
+    font-size: 0.9em;
+    transition: background-color 0.3s ease;
+    min-width: 80px;
+    margin-bottom: 10px;
+}
+
+.like-btn {
+    background-color: #28a745;
+}
+
+.dislike-btn {
+    background-color: #dc3545;
+}
+
+.like-btn:hover {
+    background-color: #218838;
+}
+
+.dislike-btn:hover {
+    background-color: #c82333;
+}
+
+/* Active button styling */
+.active {
+    opacity: 1;
+    transform: scale(1.05);
+    font-weight: bold;
+}
+
+.like-btn.active {
+    background-color: #218838; /* Darker green for active */
+}
+
+.dislike-btn.active {
+    background-color: #c82333; /* Darker red for active */
+}

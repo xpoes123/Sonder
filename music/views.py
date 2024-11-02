@@ -1,7 +1,6 @@
 import time
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -9,7 +8,10 @@ from .forms import RecommendationForm, CreateUserForm
 from .models import Song
 from .services.spotify_service import process_lists
 from .services.generative_ai_service import get_dating_profile, parse_dating_profile
+from .services.clustering_service import cluster
 import logging
+import numpy as np
+import random
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,8 +33,6 @@ def artist_seed(request):
                 return redirect('music:artist_seed')
             # Store the artists in the session
             request.session['seed_artists'] = artists
-            print(artists)
-            print(request.session.get('seed_artists'))
             return redirect('music:recommend')  # Redirect to recommend view after setting seed artists
         else:
             messages.error(request, "Invalid form submission.")
@@ -43,6 +43,7 @@ def artist_seed(request):
 def recommend(request):
     # Fetch seed artists from session
     seed_artists = request.session.get('seed_artists')
+    user = request.user
     if not seed_artists:
         messages.error(request, "No seed artists found. Please provide artists to get recommendations.")
         return redirect('music:artist_seed')
@@ -51,75 +52,82 @@ def recommend(request):
     action = request.GET.get('action')
     spotify_id = request.GET.get('song_id')
     if action and spotify_id:
-        # Get or create related liked and disliked song lists for the user
         user = request.user
         song = get_object_or_404(Song, spotify_id=spotify_id)
-
+        
+        # Run clustering if needed
+        if user.get_song_count() % 1 == 0:
+            cluster(user)
+        
         if action == 'like':
-            # Add to liked songs if not already present
             if not user.liked_songs.filter(id=song.id).exists():
                 user.liked_songs.add(song)
+                user.increment_liked_song_count()
                 messages.success(request, "You have liked the song.")
                 
-                # Remove from disliked songs if it exists there
                 if user.disliked_songs.filter(id=song.id).exists():
                     user.disliked_songs.remove(song)
                     messages.info(request, "This song was previously disliked; it's now removed from dislikes.")
-                
         elif action == 'dislike':
-            # Add to disliked songs if not already present
             if not user.disliked_songs.filter(id=song.id).exists():
                 user.disliked_songs.add(song)
+                user.increment_disliked_song_count()
                 messages.success(request, "You have disliked the song.")
                 
-                # Remove from liked songs if it exists there
                 if user.liked_songs.filter(id=song.id).exists():
                     user.liked_songs.remove(song)
                     messages.info(request, "This song was previously liked; it's now removed from likes.")
 
         return redirect('music:recommend')
 
-    # Generate recommendations without modifying liked_songs
+    # Retrieve user's clusters if they have rated more than 25 songs
+    liked_clusters = []
+    disliked_clusters = []
+    if user.get_song_count() > 25:
+        user_clusters = user.user_cluster  # Assuming one UserCluster instance per user with liked and disliked clusters
+        liked_clusters = user_clusters.liked_clusters
+        disliked_clusters = user_clusters.disliked_clusters
+
+    # Generate recommendations
     song_objects = []
     for _ in range(50):
         recommended_songs = process_lists(seed_artists)
         if recommended_songs:
-            break
-        print(f"Attempt {_}")
-        time.sleep(0.25)
-    if recommended_songs:
-        for song_data in recommended_songs:
-            # Retrieve or create song by spotify_id for displaying recommendations only
-            song, created = Song.objects.get_or_create(
-                spotify_id=song_data.song_id,
-                defaults={
-                    'name': song_data.name,
-                    'artist': song_data.artist[0] if song_data.artist else '',
-                    'acoustic': song_data.stats[0],
-                    'dance': song_data.stats[1],
-                    'duration': song_data.stats[2],
-                    'energy': song_data.stats[3],
-                    'instrumental': song_data.stats[4],
-                    'key': song_data.stats[5],
-                    'liveness': song_data.stats[6],
-                    'loud': song_data.stats[7],
-                    'mode': song_data.stats[8],
-                    'speech': song_data.stats[9],
-                    'tempo': song_data.stats[10],
-                    'valence': song_data.stats[11],
-                    'popularity': song_data.stats[12],
-                    'image': song_data.image,
-                    'preview': song_data.preview,
-                    'link': song_data.link,
-                }
-            )
-            # Generate and save dating profile if newly created or profile is missing
-            if created or not song.dating_profile:
-                dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
-                profile_data = parse_dating_profile(dating_profile_text)
-                song.dating_profile = profile_data
-                song.save()
-            song_objects.append(song)
+            for song_data in recommended_songs:
+                song_vector = [
+                    song_data.stats[0],  # acousticness
+                    song_data.stats[1],  # danceability
+                    song_data.stats[6],  # liveness
+                    (song_data.stats[10] - 50) / 200,  # tempo normalized
+                    song_data.stats[11],  # valence
+                    song_data.stats[12] / 100  # popularity normalized
+                ]
+                
+                # Check if the song vector is in a liked cluster and not in a disliked cluster
+                if user.get_song_count() > 25:
+                    if (not is_in_disliked_clusters(song_vector, disliked_clusters) and is_in_liked_clusters(song_vector, liked_clusters)):
+                        song_objects.append(create_or_update_song(song_data))
+                        context = {
+                            'recommendations': song_objects,
+                            'seed_artists': seed_artists,
+                        }
+                        print("Recommended")
+                        return render(request, 'music/recommendations.html', context)
+                    else:
+                        print(f"Song not in recommendation")
+                        continue
+                else:
+                    print(user.get_song_count())
+                    song_objects.append(create_or_update_song(song_data))
+                    context = {
+                        'recommendations': song_objects,
+                        'seed_artists': seed_artists,
+                    }
+                    print("Not recommended")
+                    return render(request, 'music/recommendations.html', context)
+        else:
+            print(f"Attempt {_}")
+            time.sleep(1)
 
     context = {
         'recommendations': song_objects,
@@ -127,7 +135,68 @@ def recommend(request):
     }
     return render(request, 'music/recommendations.html', context)
 
+def is_in_liked_clusters(song_vector, liked_clusters):
+    """Checks if a song vector is within any of the disliked clusters."""
+    song_vector = np.array(song_vector, dtype=float)  # Ensure song_vector is numeric
 
+    for entry in liked_clusters:
+        # Convert the centroid to a numpy array and compute the distance
+        centroid = np.array(entry['centroid'], dtype=float)
+        distance = np.linalg.norm(song_vector - centroid)
+        
+        # Check if the distance is within the specified radius
+        if distance <= entry['radius'] * 1.25:
+            return True
+    return False
+
+
+def is_in_disliked_clusters(song_vector, disliked_clusters):
+    """Checks if a song vector is within any of the disliked clusters."""
+    song_vector = np.array(song_vector, dtype=float)  # Ensure song_vector is numeric
+
+    for entry in disliked_clusters:
+        # Convert the centroid to a numpy array and compute the distance
+        centroid = np.array(entry['centroid'], dtype=float)
+        distance = np.linalg.norm(song_vector - centroid)
+        
+        # Check if the distance is within the specified radius
+        if distance <= entry['radius'] * 0.75:
+            return True
+    return False
+
+
+
+def create_or_update_song(song_data):
+    """Creates or updates a song based on the song_data from Spotify."""
+    song, created = Song.objects.get_or_create(
+        spotify_id=song_data.song_id,
+        defaults={
+            'name': song_data.name,
+            'artist': song_data.artist[0] if song_data.artist else '',
+            'acoustic': song_data.stats[0],
+            'dance': song_data.stats[1],
+            'duration': song_data.stats[2],
+            'energy': song_data.stats[3],
+            'instrumental': song_data.stats[4],
+            'key': song_data.stats[5],
+            'liveness': song_data.stats[6],
+            'loud': song_data.stats[7],
+            'mode': song_data.stats[8],
+            'speech': song_data.stats[9],
+            'tempo': song_data.stats[10],
+            'valence': song_data.stats[11],
+            'popularity': song_data.stats[12],
+            'image': song_data.image,
+            'preview': song_data.preview,
+            'link': song_data.link,
+        }
+    )
+    if created or not song.dating_profile:
+        dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
+        profile_data = parse_dating_profile(dating_profile_text)
+        song.dating_profile = profile_data
+        song.save()
+    return song
 
 def register(request):
     form = CreateUserForm()
@@ -158,10 +227,70 @@ def logout_user(request):
     logout(request)
     return redirect('music:login')
 
-# music/views.py
-
 def profile(request, user_id):
     # Retrieve the user object using the user ID
     user = get_object_or_404(User, id=user_id)
     # Pass the user object to the template for rendering
     return render(request, 'music/profile.html', {'profile_user': user})
+
+def song_list(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    
+    liked_songs = [
+        {
+            'image': song.image,
+            'title': song.name,
+            'artist': song.artist,
+            'acousticness': round(song.acoustic, 2),
+            'danceability': round(song.dance, 2),
+            'liveness': round(song.liveness, 2),
+            'tempo': round((song.tempo - 50) / 200, 2),
+            'valence': round(song.valence, 2),
+            'popularity': round(song.popularity / 100, 2) if song.popularity is not None else 0,
+            'spotify_id': song.spotify_id
+        }
+        for song in user.liked_songs.all()
+    ]
+
+    disliked_songs = [
+        {
+            'image': song.image,
+            'title': song.name,
+            'artist': song.artist,
+            'acousticness': round(song.acoustic, 2),
+            'danceability': round(song.dance, 2),
+            'liveness': round(song.liveness, 2),
+            'tempo': round((song.tempo - 50) / 200, 2),
+            'valence': round(song.valence, 2),
+            'popularity': round(song.popularity / 100, 2) if song.popularity is not None else 0,
+            'spotify_id': song.spotify_id
+        }
+        for song in user.disliked_songs.all()
+    ]
+    
+    # Check if the view should start with disliked songs displayed
+    initial_view = request.GET.get('view', 'liked')  # Defaults to 'liked' if no parameter is present
+    
+    return render(request, 'music/song_list.html', {
+        'profile_user': user,
+        'liked_songs': liked_songs,
+        'disliked_songs': disliked_songs,
+        'initial_view': initial_view
+    })
+
+def remove_liked_song(request, user_id, song_id):
+    if request.method == "POST":
+        user = get_object_or_404(User, id=user_id)
+        song = get_object_or_404(Song, spotify_id=song_id)
+        user.liked_songs.remove(song)  # Assuming a ManyToMany relationship
+        messages.success(request, f"{song.name} was removed from your liked songs.")
+    return redirect('music:liked_songs', user_id=user_id)
+
+
+def remove_disliked_song(request, user_id, song_id):
+    if request.method == "POST":
+        user = get_object_or_404(User, id=user_id)
+        song = get_object_or_404(Song, spotify_id=song_id)
+        user.disliked_songs.remove(song)
+        messages.success(request, f"{song.name} was removed from your disliked songs.")
+    return redirect(f'/profile/{user_id}/liked_songs/?view=disliked')

@@ -6,9 +6,12 @@ from dotenv import load_dotenv
 import base64
 from requests import post, get
 import random
+import logging
 import gemini  # Ensure this is installed or handle appropriately
 
 from django.conf import settings
+
+logger = logging.getLogger(__name__)
 
 class Song:
     def __init__(self, song_id, name, artist, stats, image, preview, link):
@@ -138,6 +141,7 @@ def get_songs_from_seed(artist_seed, stats, limit = 1):
     url += f"?{query}"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
+    print(result)
     json_result = result.json()
     return json_result.get("tracks", [])
 
@@ -159,10 +163,67 @@ def generate_artist_seed(artist_list):
     artist_seed = ",".join(filter(None, ids))
     return artist_seed
 
-def process_lists(artist_list, stats = {}):
-    artist_seed = generate_artist_seed(artist_list)
-    tracks = get_songs_from_seed(artist_seed, stats)
+def get_token():
+    client_id = settings.CLIENT_ID
+    client_secret = settings.CLIENT_SECRET
+    auth_string = f"{client_id}:{client_secret}"
+    auth_bytes = auth_string.encode("utf-8")
+    auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": f"Basic {auth_base64}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {"grant_type": "client_credentials"}
+    result = post(url, headers=headers, data=data)
+    if result.status_code == 200:
+        json_result = result.json()
+        token = json_result.get("access_token")
+        if token:
+            return token
+        else:
+            logger.error("Failed to retrieve access token: %s", json_result)
+    else:
+        logger.error("Failed to get token, status: %s, response: %s", result.status_code, result.text)
+    return None
 
+def get_auth_header(token):
+    return {"Authorization": f"Bearer {token}"}
+
+def api_request(url, headers):
+    try:
+        result = get(url, headers=headers)
+        result.raise_for_status()  # Raises HTTPError if the status is 4xx or 5xx
+        return result.json()  # Assumes a valid JSON response
+    except Exception as e:
+        logger.error("Error making API request to %s: %s", url, e)
+        return None
+
+def search_for_artist(token, artist_name):
+    url = "https://api.spotify.com/v1/search"
+    headers = get_auth_header(token)
+    query = f"?q={artist_name}&type=artist&limit=1"
+    query_url = url + query
+    json_result = api_request(query_url, headers)
+    if json_result:
+        artists = json_result.get("artists", {}).get("items", [])
+        if artists:
+            return artists[0].get("id")
+    logger.warning("No artist found for %s", artist_name)
+    return None
+
+# Sample error handling in process_lists function
+def process_lists(artist_list, stats={}):
+    token = get_token()
+    if not token:
+        logger.error("Failed to obtain token")
+        return []
+
+    artist_seed = generate_artist_seed(artist_list)
+    if not artist_seed:
+        logger.error("No valid artists found for seed")
+        return []
+    tracks = get_songs_from_seed(artist_seed, stats)
     song_objects = []
     for track in tracks:
         song_info = get_song_info(track["id"])
@@ -175,15 +236,9 @@ def process_lists(artist_list, stats = {}):
             stats=song_info[4],
             image=song_info[0],
             preview=song_info[3],
-            link = song_info[5],
+            link=song_info[5],
         )
         song_objects.append(song)
 
     random.shuffle(song_objects)
     return song_objects
-
-def elbow_method():
-    pass
-
-def k_means():
-    pass

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
-from .models import User
+from .models import User, UserCluster
 from music.models import Song
 from django.utils.translation import gettext_lazy as _
 
@@ -45,3 +45,9 @@ class CustomUserAdmin(BaseUserAdmin):
 # Register the custom User model and unregister the Group model if not needed
 admin.site.register(User, CustomUserAdmin)
 admin.site.unregister(Group)  # Optional, only if you don't need the Group model in admin
+
+class UserClusterAdmin(admin.ModelAdmin):
+    list_display = ('user', 'liked_clusters', 'disliked_clusters')
+    search_fields = ('user__username',)
+
+admin.site.register(UserCluster, UserClusterAdmin)
