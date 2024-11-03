@@ -19,13 +19,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from .env file
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 # Now retrieve environment variables using os.getenv
-client_id = os.getenv("CLIENT_ID")
-client_secret = os.getenv("CLIENT_SECRET")
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 genai_api_key = os.getenv("GENAI_API_KEY")
 musixmatch_api_key = os.getenv("MUSIXMATCH_API_KEY")
 
 # Check if the environment variables are loaded correctly
-if not client_id or not client_secret:
+if not CLIENT_ID or not CLIENT_SECRET:
     raise ValueError("Spotify CLIENT_ID and CLIENT_SECRET must be set in .env file.")
 if not genai_api_key:
     raise ValueError("Google Generative AI GENAI_API_KEY must be set in .env file.")
