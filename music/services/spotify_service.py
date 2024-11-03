@@ -64,7 +64,6 @@ def search_for_artist(token, artist_name):
     if result.status_code != 200:
         logger.error("Failed to search for artist, status code: %s, response: %s", result.status_code, result.text)
         return None
-
     json_result = result.json().get("artists", {}).get("items", [])
     if not json_result:
         logger.warning("No artist exists with the name: %s", artist_name)
@@ -98,6 +97,11 @@ def get_song_info(song_id):
     url = f"https://api.spotify.com/v1/tracks/{song_id}"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
+
+    if result.status_code == 429:
+        logger.error("Spotify API rate limit exceeded while fetching song info.")
+        return None
+
     json_result = result.json()
     image = get_song_image(json_result)
     name = get_song_name(json_result)
@@ -155,6 +159,12 @@ def get_songs_from_seed(artist_seed, limit=1):
     query = f"?seed_artists={artist_seed}&limit={limit}"
     headers = get_auth_header(token)
     result = get(url + query, headers=headers)
+    
+    # Check for rate limiting (429) error
+    if result.status_code == 429:
+        logger.error("Spotify API rate limit exceeded.")
+        return None
+
     json_result = result.json()
     return json_result.get("tracks", [])
 
