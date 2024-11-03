@@ -48,16 +48,57 @@ def recommend(request):
     if not seed_artists:
         messages.error(request, "No seed artists found. Please provide artists to get recommendations.")
         return redirect('music:artist_seed')
+        
+    # Handle "like" and "dislike" actions
+    action = request.GET.get('action')
+    spotify_id = request.GET.get('song_id')
+    if action and spotify_id:
+        user = request.user
+        song = get_object_or_404(Song, spotify_id=spotify_id)
+        
+        # Run clustering if needed
+        if user.get_song_count() % 5 == 0:
+            print("Clustering")
+            cluster(user)
+        # Fetch recommended songs
+        if action == 'like':
+            if not user.liked_songs.filter(id=song.id).exists():
+                user.liked_songs.add(song)
+                user.increment_liked_song_count()
+                messages.success(request, "You have liked the song.")
+                
+                if user.disliked_songs.filter(id=song.id).exists():
+                    user.disliked_songs.remove(song)
+                    messages.info(request, "This song was previously disliked; it's now removed from dislikes.")
+        elif action == 'dislike':
+            if not user.disliked_songs.filter(id=song.id).exists():
+                user.disliked_songs.add(song)
+                user.increment_disliked_song_count()
+                messages.success(request, "You have disliked the song.")
+                
+                if user.liked_songs.filter(id=song.id).exists():
+                    user.liked_songs.remove(song)
+                    messages.info(request, "This song was previously liked; it's now removed from likes.")
 
-    # Fetch recommended songs
+        return redirect('music:recommend')
+
+    # Retrieve user's clusters if they have rated more than 20 songs
+    liked_clusters = []
+    disliked_clusters = []
+    if user.get_song_count() > 20:
+        user_clusters = user.user_cluster
+        liked_clusters = user_clusters.liked_clusters
+        disliked_clusters = user_clusters.disliked_clusters
+
+    # Generate recommendations
     song_objects = []
-    for _ in range(20):
+    # Sometimes Spotify API does not return a valid song, iterate until one does get recommended
+    for _ in range(10):
         recommended_songs = process_lists(seed_artists)
         if recommended_songs is None:
             messages.error(request, "Spotify API calls failed, please try again in a few hours.")
             return redirect('music:artist_seed')
         if recommended_songs:
-            # Process and return recommendations if available
             for song_data in recommended_songs:
                 song_vector = [
                     song_data.stats[0],  # acousticness
@@ -67,32 +108,46 @@ def recommend(request):
                     song_data.stats[11],  # valence
                     song_data.stats[12] / 100  # popularity normalized
                 ]
+                
+                # Check if the song vector is in a liked cluster and not in a disliked cluster and add noise to get new songs
                 if user.get_song_count() > 25:
-                    if random.randint(0, 100) < 60:
+                    if random.randint(0,100) < 60 and (not is_in_disliked_clusters(song_vector, disliked_clusters) and is_in_liked_clusters(song_vector, liked_clusters)):
                         song_objects.append(create_or_update_song(song_data))
                         context = {
                             'recommendations': song_objects,
                             'seed_artists': seed_artists,
                         }
+                        print("Recommended")
                         return render(request, 'music/recommendations.html', context)
+                    elif random.randint(0,100) < 60:
+                        song_objects.append(create_or_update_song(song_data))
+                        context = {
+                            'recommendations': song_objects,
+                            'seed_artists': seed_artists,
+                        }
+                        print("Fake Recommended")
+                        return render(request, 'music/recommendations.html', context)
+                    else:
+                        print(f"Song not in recommendation")
+                        continue
                 else:
                     song_objects.append(create_or_update_song(song_data))
                     context = {
                         'recommendations': song_objects,
                         'seed_artists': seed_artists,
                     }
+                    print("Not recommended")
                     return render(request, 'music/recommendations.html', context)
         else:
+            print(f"Attempt {_}")
+            # Delaying API calls to not get rate limited by the server
             time.sleep(1)
-    else:
-        # Display errors here TODO
-        pass
-    # If no recommendations, return message
+
     context = {
         'recommendations': song_objects,
         'seed_artists': seed_artists,
     }
-    return render(request, 'music/recommendations.html', context)
+    return render(request, 'music/recommendations.html', context)    
 
 
 
@@ -269,12 +324,12 @@ def get_user_cluster(centroid):
     
     # Define the classification scheme
     classification_scheme = {
-        "acousticness": ["Synthetic", "Mild", "Organic", "Pure"],
+        "acousticness": ["Produced", "Radio", "Organic", "Fullband"],
         "danceability": ["Dead", "Stiff", "Groovy", "Danceable"],
         "liveness": ["Studio", "Muted", "Lively", "Live"],
         "tempo": ["Slow", "Mellow", "Upbeat", "Fast"],
         "valence": ["Gloomy", "Neutral", "Happy", "Joyful"],
-        "popularity": ["Niche", "Hidden", "Known", "Basic"],
+        "popularity": ["Niche", "Indie", "Known", "Basic"],
     }
 
     def classify_value(attribute, value):

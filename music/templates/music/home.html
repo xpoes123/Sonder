@@ -8,7 +8,7 @@
         <h2>Find Your Song to Love</h2>
         <div class="left-text"><p>Welcome to Sonder, your personalized music recommendation platform. Listen to new songs with song based dating profiles</p></div>
         {% if user.is_authenticated %}
-            <a href="{% url 'music:artist_seed' %}" class="login_btn">Get Started</a>
+            <a href="{% url 'music:artist_seed' %}" class="login_btn">Get Swiping</a>
         {% else %}
             <a href="{% url 'music:register' %}" class="login_btn">Get Started</a>
         {% endif %}

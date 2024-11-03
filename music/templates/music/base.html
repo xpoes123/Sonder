@@ -27,7 +27,7 @@
             <ul class="nav-left">
                 <li>
                     {% if user.is_authenticated %}
-                    <a href="{% url 'music:artist_seed' %}" class="{% if request.resolver_match.url_name == 'artist_seed' %}active{% endif %}">Get Started</a>
+                    <a href="{% url 'music:artist_seed' %}" class="{% if request.resolver_match.url_name == 'artist_seed' %}active{% endif %}">Swipe</a>
                     {% else %}
                         <a href="{% url 'music:register' %}" class="login_btn">Get Started</a>
                     {% endif %}
