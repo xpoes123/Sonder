@@ -1,0 +1,64 @@
+/* Profile style sheet*/
+.container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.profile-links ul {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+.profile-links ul li {
+    display: inline;
+    margin-right: 15px;
+}
+
+.profile-links ul li a {
+    text-decoration: none;
+    color: #3498db;
+    font-weight: bold;
+}
+
+.profile-links ul li a:hover {
+    color: #2980b9;
+}
+
+/* Liked Songs Gallery Styles */
+.liked-songs-gallery {
+    margin-top: 30px;
+    text-align: center;
+}
+
+.gallery {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.gallery-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    object-fit: cover;
+    border-radius: 8px;
+    opacity: 0;
+    animation: slideshow__fade 4s infinite;
+}
+
+@keyframes slideshow__fade {  
+    0%, 100% {
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+}

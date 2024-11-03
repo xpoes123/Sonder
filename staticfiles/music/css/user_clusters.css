@@ -1,0 +1,91 @@
+/* user_clusters.css */
+
+.container {
+    max-width: 80%;
+    margin: 30px auto;
+    font-family: Arial, sans-serif;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    color: #333;
+}
+
+h3 {
+    color: #555;
+    margin-top: 40px;
+    font-size: 1.6em;
+}
+
+.cluster-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.cluster-header {
+    padding: 15px;
+    background-color: #f9f9f9;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.cluster-header:hover {
+    background-color: #f1f1f1;
+}
+
+.cluster-header h4 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.expand-icon {
+    font-size: 1.5em;
+    color: #888;
+}
+
+.cluster-content {
+    padding: 15px;
+    display: none;
+    background-color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.song-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.song-table th, .song-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.9em;
+}
+
+.song-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+.song-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.song-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.cluster-content p {
+    font-size: 1em;
+    color: #666;
+}
