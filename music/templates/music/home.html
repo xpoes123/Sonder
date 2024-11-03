@@ -6,7 +6,6 @@
 
 {% block content %}
 <div class="container">
-    <!-- Hero Section -->
     <section class="hero">
         <h2>Find Your Musical Soulmate</h2>
         <div class="left-text"><p>Welcome to Sonder, your personalized music recommendation platform. Listen to new songs with song based dating profiles</p></div>
@@ -38,7 +37,7 @@
         </div>
     </section>
 
-    <!-- Call to Action Section -->
+    <!-- Call to Action -->
     <section class="cta">
         <h2>Join the Sonder Community</h2>
         <div class="left-text">
@@ -47,8 +46,4 @@
         <a href="{% url 'music:register' %}" class="submit-btn">Sign Up Now</a>
     </section>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Optional: Add any additional JavaScript here -->
 {% endblock %}

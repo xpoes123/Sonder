@@ -9,7 +9,7 @@ import numpy as np
 
 def elbow_method(vectors, max_clusters=10, threshold=0.1):
     """
-    Find the optimal number of clusters using the elbow method without plotting.
+    Find the optimal number of clusters using the elbow method.
 
     Parameters:
     - vectors: List of feature vectors to cluster.
@@ -17,7 +17,7 @@ def elbow_method(vectors, max_clusters=10, threshold=0.1):
     - threshold: Threshold for the minimum rate of change in inertia.
 
     Returns:
-    - optimal_k: Optimal number of clusters based on the elbow method.
+    - optimal_k: Optimal number of clusters for our data.
     """
     inertia_values = []
     n_samples = len(vectors)
@@ -35,18 +35,19 @@ def elbow_method(vectors, max_clusters=10, threshold=0.1):
     rate_of_change = np.diff(inertia_values)
     second_derivative = np.diff(rate_of_change)
     
-    # Identify the optimal k by finding where the second derivative becomes stable (near zero)
+    # Identify the optimal k by finding where the second derivative becomes stable
     optimal_k = 1
     for i, change in enumerate(second_derivative):
         if abs(change) < threshold:
-            optimal_k = i + 2  # +2 because we are checking for the 2nd derivative and indexing starts at 0
+            # +2 because we are checking for the 2nd derivative and indexing starts at 0
+            optimal_k = i + 2 
             break
         
     return optimal_k
 
 def calculate_centroids(vectors):
     """
-    Calculate centroids and radii for clusters of vectors.
+    Run K-means on our vectors based on the clusteringn output of the elbow method.
     
     Parameters:
     - vectors: List of feature vectors to cluster.
@@ -64,7 +65,7 @@ def calculate_centroids(vectors):
         cluster_points = np.array(vectors)[np.where(kmeans.labels_ == i)]
         radius = np.max(np.linalg.norm(cluster_points - center, axis=1)) if len(cluster_points) > 0 else 0
         clusters.append({
-            "centroid": center.tolist(),  # Convert to list for JSON storage
+            "centroid": center.tolist(),
             "radius": radius
         })
     
@@ -72,19 +73,15 @@ def calculate_centroids(vectors):
 
 def cluster(user):
     """
-    Cluster the liked and disliked songs for a user and store the results in UserCluster.
-    
-    Parameters:
-    - user: The User instance to cluster songs for.
+    Cluster the liked and disliked songs for a user and store the results in UserCluster
     """
-    # Access liked songs and normalize features
+    # Access liked and disliked songs and normalize features
     liked_songs = user.liked_songs.all()
     liked_vectors = [
         [song.acoustic, song.dance, song.liveness, (song.tempo - 50) / 200, song.valence, song.popularity / 100]
         for song in liked_songs
     ]
     
-    # Access disliked songs and normalize features
     disliked_songs = user.disliked_songs.all()
     disliked_vectors = [
         [song.acoustic, song.dance, song.liveness, (song.tempo - 50) / 200, song.valence, song.popularity / 100]
@@ -95,11 +92,10 @@ def cluster(user):
     liked_clusters = calculate_centroids(liked_vectors) if len(liked_vectors) > 1 else []
     disliked_clusters = calculate_centroids(disliked_vectors) if len(disliked_vectors) > 1 else []
     
-    # Use a transaction to ensure atomicity
+    # Ensures that all updates are made correctly with transaction.atomic()
     with transaction.atomic():
         user_cluster, created = UserCluster.objects.get_or_create(user=user)
         
-        # Update fields regardless of whether a new instance was created or an existing one was retrieved
         user_cluster.liked_clusters = liked_clusters
         user_cluster.disliked_clusters = disliked_clusters
         user_cluster.save()

@@ -104,8 +104,8 @@ nav a.active, nav a:hover {
 .button-container {
     display: flex;
     justify-content: center; /* Centers buttons in the container */
-    gap: 5px; /* Minimal gap between buttons */
-    margin-top: 0; /* Removes extra space above container */
+    gap: 5px;
+    margin-top: 0;
 }
 
 /* Add Artist Button */
@@ -342,3 +342,6 @@ form {
         font-size: 1.5em;
     }
 }
+
+
+/* This needs to be refactored since I changed a lot */

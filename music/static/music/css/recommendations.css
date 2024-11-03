@@ -158,7 +158,6 @@
     color: #721c24;
 }
 
-/* Responsive Design Enhancements */
 @media (max-width: 600px) {
     .container {
         width: 95%;

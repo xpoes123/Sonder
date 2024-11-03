@@ -18,9 +18,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
 load_dotenv(os.path.join(BASE_DIR, '.env'))
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-GENAI_API_KEY = os.getenv('GENAI_API_KEY')
+# Now retrieve environment variables using os.getenv
+client_id = os.getenv("CLIENT_ID")
+client_secret = os.getenv("CLIENT_SECRET")
+genai_api_key = os.getenv("GENAI_API_KEY")
+musixmatch_api_key = os.getenv("MUSIXMATCH_API_KEY")
+
+# Check if the environment variables are loaded correctly
+if not client_id or not client_secret:
+    raise ValueError("Spotify CLIENT_ID and CLIENT_SECRET must be set in .env file.")
+if not genai_api_key:
+    raise ValueError("Google Generative AI GENAI_API_KEY must be set in .env file.")
+if not musixmatch_api_key:
+    raise ValueError("Musixmatch API_KEY must be set in .env file.")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/

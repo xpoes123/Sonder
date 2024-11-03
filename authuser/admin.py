@@ -5,20 +5,19 @@ from .models import User, UserCluster
 from music.models import Song
 from django.utils.translation import gettext_lazy as _
 
-# Inline for Liked Songs
 class LikedSongsInline(admin.TabularInline):
-    model = User.liked_songs.through  # Access through the intermediary table
-    extra = 0  # No extra empty fields displayed
+    model = User.liked_songs.through
+    extra = 0
     verbose_name = "Liked Song"
     verbose_name_plural = "Liked Songs"
 
-# Inline for Disliked Songs
 class DislikedSongsInline(admin.TabularInline):
     model = User.disliked_songs.through
     extra = 0
     verbose_name = "Disliked Song"
     verbose_name_plural = "Disliked Songs"
 
+# Creating a custom user 
 class CustomUserAdmin(BaseUserAdmin):
     # Specify the fields to be displayed in the admin panel
     fieldsets = (
@@ -39,12 +38,11 @@ class CustomUserAdmin(BaseUserAdmin):
     search_fields = ('username', 'email', 'name')
     ordering = ('username',)
 
-    # Register inlines with the User admin
     inlines = [LikedSongsInline, DislikedSongsInline]
 
-# Register the custom User model and unregister the Group model if not needed
+# Register the custom User model
 admin.site.register(User, CustomUserAdmin)
-admin.site.unregister(Group)  # Optional, only if you don't need the Group model in admin
+admin.site.unregister(Group)
 
 class UserClusterAdmin(admin.ModelAdmin):
     list_display = ('user', 'liked_clusters', 'disliked_clusters')

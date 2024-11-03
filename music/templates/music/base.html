@@ -15,11 +15,10 @@
     <link rel="stylesheet" type="text/css" href="{% static 'music/css/styles.css' %}">
     
     {% block extra_head %}
-    <!-- Additional head elements can be added by extending templates -->
+    <!-- Where the template extra header goes -->>
     {% endblock %}
 </head>
 <body>
-    <!-- Header -->
     <!-- Header -->
 <header>
     {% block header %}
@@ -67,8 +66,6 @@
     {% endblock %}
 </header>
 
-    
-    <!-- Main Content -->
     <main>
         {% block content %}
         <!-- Content from child templates will be injected here -->

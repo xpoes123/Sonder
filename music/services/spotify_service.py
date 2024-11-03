@@ -7,7 +7,7 @@ import base64
 from requests import post, get
 import random
 import logging
-import gemini  # Ensure this is installed or handle appropriately
+import gemini
 
 from django.conf import settings
 
@@ -22,15 +22,19 @@ class Song:
         self.image = image
         self.preview = preview
         self.link = link
-        self.dating_profile = None  # To be added later
+        self.dating_profile = None
 
 def printj(json_file):
+    """
+    Debugging tool
+    """
     print(json.dumps(json_file, indent=4))
 
 def get_token():
-    client_id = settings.CLIENT_ID
-    client_secret = settings.CLIENT_SECRET
-    auth_string = f"{client_id}:{client_secret}"
+    """
+    Obtain an OAuth token for the Spotify API.
+    """
+    auth_string = f"{os.getenv("CLIENT_ID")}:{os.getenv("CLIENT_SECRET")}"
     auth_bytes = auth_string.encode("utf-8")
     auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
     url = "https://accounts.spotify.com/api/token"
@@ -40,16 +44,29 @@ def get_token():
     }
     data = {"grant_type": "client_credentials"}
     result = post(url, headers=headers, data=data)
-    json_result = result.json()
-    token = json_result.get("access_token")
-    return token
+    if result.status_code == 200:
+        json_result = result.json()
+        token = json_result.get("access_token")
+        if token:
+            return token
+        else:
+            logger.error("Failed to retrieve access token: %s", json_result)
+    else:
+        logger.error("Failed to get token, status: %s, response: %s", result.status_code, result.text)
+    return None
 
 token = get_token()
 
 def get_auth_header(token):
+    """
+    Get the spotify header with the provided token
+    """
     return {"Authorization": f"Bearer {token}"}
 
 def search_for_artist(token, artist_name):
+    """
+    Find the artist based on the artist name using the Spotify API
+    """
     url = "https://api.spotify.com/v1/search"
     headers = get_auth_header(token)
     query = f"?q={artist_name}&type=artist&limit=1"
@@ -62,6 +79,10 @@ def search_for_artist(token, artist_name):
     return json_result[0]["id"]
 
 def get_related_artist(token, artist_id, limit=3):
+    """
+    Find similar artists based on other artist using the Spotify API
+    Unused method, could be used in the future
+    """
     url = f"https://api.spotify.com/v1/artists/{artist_id}/related-artists"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
@@ -70,6 +91,10 @@ def get_related_artist(token, artist_id, limit=3):
     return related_artists
 
 def get_artist_tracks(token, artist_id):
+    """
+    Find the top songs of an artist using the Spotify API
+    Unused method, could be used in the future
+    """
     url = f"https://api.spotify.com/v1/artists/{artist_id}/top-tracks"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
@@ -77,10 +102,15 @@ def get_artist_tracks(token, artist_id):
     return json_result["tracks"]
 
 def get_track_link(json_result):
+    """
+    Returns the link of a song, helper method
+    """
     return json_result["album"]["external_urls"]["spotify"]
 
-# Returns the song's image, name, artist, preview_url, and stats
 def get_song_info(song_id):
+    """
+    Returns all of the info of a song using the Spotify API
+    """
     url = f"https://api.spotify.com/v1/tracks/{song_id}"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
@@ -96,9 +126,15 @@ def get_song_info(song_id):
     return image, name, artist_name, preview_url, stats, link
 
 def get_dating_profile(song):
+    """
+    Creates a dating profile for a song
+    """
     return gemini.get_dating_profile(song.name, song.artist[0], song.stats)
 
 def get_song_stats(song_id):
+    """
+    Returns all of the stats of a song using the Spotify API
+    """
     url = f"https://api.spotify.com/v1/audio-features/{song_id}"
     headers = get_auth_header(token)
     result = get(url, headers=headers)
@@ -133,7 +169,10 @@ def get_song_name(song_json):
 def get_song_image(song_json):
     return song_json["album"]["images"][1]['url'] if len(song_json["album"]["images"]) > 1 else song_json["album"]["images"][0]['url']
 
-def get_songs_from_seed(artist_seed, stats, limit = 1):
+def get_songs_from_seed(artist_seed, limit = 1):
+    """
+    Get song recommendations from the spotify API using an artist_seed provided by the user
+    """
     url = "https://api.spotify.com/v1/recommendations"
     query = ""
     if artist_seed:
@@ -146,6 +185,9 @@ def get_songs_from_seed(artist_seed, stats, limit = 1):
     return json_result.get("tracks", [])
 
 def recommend_seed(song_seed, artist_seed):
+    """
+    I don't really remember what this was for, I don't think this is being used
+    """
     songs = get_songs_from_seed(song_seed, artist_seed)
     song_infos = []
     for track in songs:
@@ -159,47 +201,32 @@ def recommend_seed(song_seed, artist_seed):
     return song_infos
 
 def generate_artist_seed(artist_list):
+    """
+    Produces a seed usable by the Spotify API based on passed form data
+    """
     ids = [search_for_artist(token, artist) for artist in artist_list]
     artist_seed = ",".join(filter(None, ids))
     return artist_seed
-
-def get_token():
-    client_id = settings.CLIENT_ID
-    client_secret = settings.CLIENT_SECRET
-    auth_string = f"{client_id}:{client_secret}"
-    auth_bytes = auth_string.encode("utf-8")
-    auth_base64 = base64.b64encode(auth_bytes).decode("utf-8")
-    url = "https://accounts.spotify.com/api/token"
-    headers = {
-        "Authorization": f"Basic {auth_base64}",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
-    data = {"grant_type": "client_credentials"}
-    result = post(url, headers=headers, data=data)
-    if result.status_code == 200:
-        json_result = result.json()
-        token = json_result.get("access_token")
-        if token:
-            return token
-        else:
-            logger.error("Failed to retrieve access token: %s", json_result)
-    else:
-        logger.error("Failed to get token, status: %s, response: %s", result.status_code, result.text)
-    return None
 
 def get_auth_header(token):
     return {"Authorization": f"Bearer {token}"}
 
 def api_request(url, headers):
+    """
+    Method to run the json requests
+    """
     try:
         result = get(url, headers=headers)
-        result.raise_for_status()  # Raises HTTPError if the status is 4xx or 5xx
-        return result.json()  # Assumes a valid JSON response
+        result.raise_for_status()
+        return result.json()
     except Exception as e:
         logger.error("Error making API request to %s: %s", url, e)
         return None
 
 def search_for_artist(token, artist_name):
+    """
+    Get the ID of an artist for easier use
+    """
     url = "https://api.spotify.com/v1/search"
     headers = get_auth_header(token)
     query = f"?q={artist_name}&type=artist&limit=1"
@@ -212,8 +239,10 @@ def search_for_artist(token, artist_name):
     logger.warning("No artist found for %s", artist_name)
     return None
 
-# Sample error handling in process_lists function
 def process_lists(artist_list, stats={}):
+    """
+    The main function that returns the recommended songs
+    """
     token = get_token()
     if not token:
         logger.error("Failed to obtain token")

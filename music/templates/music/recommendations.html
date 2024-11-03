@@ -31,12 +31,12 @@
                         <p>No preview available.</p>
                     {% endif %}
 
-                    <!-- Toggle Dating Profile Button -->
+                    <!-- Toggle Profile -->
                     <button class="toggle-profile-btn" onclick="toggleProfile('profile{{ forloop.counter }}')">
                         Show Dating Profile
                     </button>
 
-                    <!-- Dating Profile Section -->
+                    <!-- Dating Profile -->
                     <div class="dating-profile" id="profile{{ forloop.counter }}" style="display: none;">
                         <h3>Dating Profile</h3>
                         <p><strong>Gender:</strong> {{ song.dating_profile.gender }}</p>
@@ -70,7 +70,6 @@
             <p>No recommendations available based on your input.</p>
         {% endif %}
 
-        <!-- Messages Display -->
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}

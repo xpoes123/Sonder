@@ -67,6 +67,9 @@ CATEGORIES = [
 ]
 
 def parse_dating_profile(dating_profile_text):
+    """
+    Takes the output from gemini and produces a parasable dating profile to be displayed
+    """
     lines = dating_profile_text.strip().split("\n")
     profile_data = {
         "gender": lines[0] if len(lines) > 0 else "N/A",
@@ -84,9 +87,9 @@ def get_dating_profile(song_name, artist_name, stats):
     """
     Generates a dating profile based on song information using Google Generative AI.
     """
-    genai.configure(api_key=os.getenv("GENAI_API_KEY"))  # Move API key to .env
+    genai.configure(api_key=os.getenv("GENAI_API_KEY"))
 
-    # Create the model
+    # Model parameters
     generation_config = {
         "temperature": 1,
         "top_p": 0.95,
@@ -107,9 +110,10 @@ def get_dating_profile(song_name, artist_name, stats):
     )
 
     chat_session = model.start_chat(history=[])
+    # Select the personality settings for the dating profile
     cats = random.sample(CATEGORIES, 3)
-    print(cats)
 
+    # Prompt engineering for the prompt that we want to query with
     base_message = (
         f"You are creating a dating app profile for songs, I will provide you some of their lyrics, song name, and artist name, "
         f"as well as some of their metrics such as acoustic (A confidence measure from 0.0 to 1.0 of whether the track is acoustic. "
@@ -156,7 +160,7 @@ def get_phrase_from_cluster(cluster_name):
     """
     Generates a dating profile based on song information using Google Generative AI.
     """
-    genai.configure(api_key=os.getenv("GENAI_API_KEY"))  # Move API key to .env
+    genai.configure(api_key=os.getenv("GENAI_API_KEY"))
 
     # Create the model
     generation_config = {

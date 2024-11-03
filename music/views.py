@@ -33,7 +33,8 @@ def artist_seed(request):
                 return redirect('music:artist_seed')
             # Store the artists in the session
             request.session['seed_artists'] = artists
-            return redirect('music:recommend')  # Redirect to recommend view after setting seed artists
+              # Redirect to recommend view after setting seed artists
+            return redirect('music:recommend')
         else:
             messages.error(request, "Invalid form submission.")
     return render(request, 'music/artist_seed.html', {'form': form})
@@ -41,6 +42,10 @@ def artist_seed(request):
 
 @login_required
 def recommend(request):
+    """
+    Recommends a song based on the original artist they were seeding from
+    as well as using clustering to check if user's song might be a preference
+    """
     # Fetch seed artists from session
     seed_artists = request.session.get('seed_artists')
     user = request.user
@@ -56,7 +61,6 @@ def recommend(request):
         song = get_object_or_404(Song, spotify_id=spotify_id)
         
         # Run clustering if needed
-        print(user.get_song_count())
         if user.get_song_count() % 5 == 0:
             print("Clustering")
             cluster(user)
@@ -82,16 +86,17 @@ def recommend(request):
 
         return redirect('music:recommend')
 
-    # Retrieve user's clusters if they have rated more than 25 songs
+    # Retrieve user's clusters if they have rated more than 20 songs
     liked_clusters = []
     disliked_clusters = []
-    if user.get_song_count() > 25:
-        user_clusters = user.user_cluster  # Assuming one UserCluster instance per user with liked and disliked clusters
+    if user.get_song_count() > 20:
+        user_clusters = user.user_cluster
         liked_clusters = user_clusters.liked_clusters
         disliked_clusters = user_clusters.disliked_clusters
 
     # Generate recommendations
     song_objects = []
+    # Sometimes Spotify API does not return a valid song, iterate until one does get recommended
     for _ in range(50):
         recommended_songs = process_lists(seed_artists)
         if recommended_songs:
@@ -105,7 +110,7 @@ def recommend(request):
                     song_data.stats[12] / 100  # popularity normalized
                 ]
                 
-                # Check if the song vector is in a liked cluster and not in a disliked cluster
+                # Check if the song vector is in a liked cluster and not in a disliked cluster and add noise to get new songs
                 if user.get_song_count() > 25:
                     if random.randint(0,100) < 60 and (not is_in_disliked_clusters(song_vector, disliked_clusters) and is_in_liked_clusters(song_vector, liked_clusters)):
                         song_objects.append(create_or_update_song(song_data))
@@ -127,7 +132,6 @@ def recommend(request):
                         print(f"Song not in recommendation")
                         continue
                 else:
-                    print(user.get_song_count())
                     song_objects.append(create_or_update_song(song_data))
                     context = {
                         'recommendations': song_objects,
@@ -137,6 +141,7 @@ def recommend(request):
                     return render(request, 'music/recommendations.html', context)
         else:
             print(f"Attempt {_}")
+            # Delaying API calls to not get rate limited by the server
             time.sleep(1)
 
     context = {
@@ -145,9 +150,13 @@ def recommend(request):
     }
     return render(request, 'music/recommendations.html', context)
 
+
+"""
+Helper methods to check if a song is within a cluster
+TODO we can combine these methods
+"""
 def is_in_liked_clusters(song_vector, liked_clusters):
-    """Checks if a song vector is within any of the disliked clusters."""
-    song_vector = np.array(song_vector, dtype=float)  # Ensure song_vector is numeric
+    song_vector = np.array(song_vector, dtype=float)
 
     for entry in liked_clusters:
         # Convert the centroid to a numpy array and compute the distance
@@ -159,25 +168,20 @@ def is_in_liked_clusters(song_vector, liked_clusters):
             return True
     return False
 
-
 def is_in_disliked_clusters(song_vector, disliked_clusters):
-    """Checks if a song vector is within any of the disliked clusters."""
-    song_vector = np.array(song_vector, dtype=float)  # Ensure song_vector is numeric
-
+    song_vector = np.array(song_vector, dtype=float)
     for entry in disliked_clusters:
-        # Convert the centroid to a numpy array and compute the distance
         centroid = np.array(entry['centroid'], dtype=float)
         distance = np.linalg.norm(song_vector - centroid)
-        
-        # Check if the distance is within the specified radius
         if distance <= entry['radius']:
             return True
     return False
 
 
-
 def create_or_update_song(song_data):
-    """Creates or updates a song based on the song_data from Spotify."""
+    """
+    Creates or updates a song based on the song_data from Spotify.
+    """
     song, created = Song.objects.get_or_create(
         spotify_id=song_data.song_id,
         defaults={
@@ -201,6 +205,7 @@ def create_or_update_song(song_data):
             'link': song_data.link,
         }
     )
+    # If the song has not been seen before
     if created or not song.dating_profile:
         dating_profile_text = get_dating_profile(song.name, song_data.artist[0], song_data.stats)
         profile_data = parse_dating_profile(dating_profile_text)
@@ -209,6 +214,9 @@ def create_or_update_song(song_data):
     return song
 
 def register(request):
+    """
+    Registration request to make a new account
+    """
     form = CreateUserForm()
     if request.method == "POST":
         form = CreateUserForm(request.POST)
@@ -220,6 +228,9 @@ def register(request):
     return render(request, 'music/register.html', context)
 
 def login_page(request):
+    """
+    Login request to login to an existing account
+    """
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -238,12 +249,13 @@ def logout_user(request):
     return redirect('music:login')
 
 def profile(request, user_id):
-    # Retrieve the user object using the user ID
     user = get_object_or_404(User, id=user_id)
-    # Pass the user object to the template for rendering
     return render(request, 'music/profile.html', {'profile_user': user})
 
 def song_list(request, user_id):
+    """
+    Request to display liked and disliked songs for a user
+    """
     user = get_object_or_404(User, id=user_id)
     
     liked_songs = [
@@ -292,7 +304,7 @@ def remove_liked_song(request, user_id, song_id):
     if request.method == "POST":
         user = get_object_or_404(User, id=user_id)
         song = get_object_or_404(Song, spotify_id=song_id)
-        user.liked_songs.remove(song)  # Assuming a ManyToMany relationship
+        user.liked_songs.remove(song)
         messages.success(request, f"{song.name} was removed from your liked songs.")
     return redirect('music:liked_songs', user_id=user_id)
 
@@ -306,7 +318,9 @@ def remove_disliked_song(request, user_id, song_id):
     return redirect(f'/profile/{user_id}/liked_songs/?view=disliked')
 
 def get_user_cluster(centroid):
-    """Creates or retrieves a cluster for the user with a classified name."""
+    """
+    Creates or retrieves a cluster for the user with a classified name.
+    """
     
     # Define the classification scheme
     classification_scheme = {
@@ -319,12 +333,11 @@ def get_user_cluster(centroid):
     }
 
     def classify_value(attribute, value):
-        """Classify a numeric attribute into one of four categories."""
         ranges = [0.25, 0.5, 0.75, 1.0]
         for i, threshold in enumerate(ranges):
             if value < threshold:
                 return classification_scheme[attribute][i]
-        return classification_scheme[attribute][-1]  # Default to last category
+        return classification_scheme[attribute][-1]
 
     # Generate classification name based on centroid values
     attributes = ["acousticness", "danceability", "liveness", "tempo", "valence", "popularity"]
@@ -336,7 +349,7 @@ def get_user_cluster(centroid):
     existing_cluster = Cluster.objects.filter(name=classification_name).first()
 
     if existing_cluster:
-        return existing_cluster.genre  # Return existing cluster if found
+        return existing_cluster.genre
 
     # If no existing cluster, create a new one with a generated name
     name = get_phrase_from_cluster(classification_name)
@@ -344,12 +357,12 @@ def get_user_cluster(centroid):
     cluster.save()
     return cluster.genre
 
-def is_song_in_cluster(song, centroid, radius=0.15):  # Increased tolerance for testing
+def is_song_in_cluster(song, centroid, radius=0.15):
     """
     Determines if a song belongs to a cluster based on a tolerance.
     Adjust the tolerance to make clustering more or less strict.
     """
-    # Create song vector with normalized values and rounding for consistency
+
     song_vector = [
         round(song.acoustic, 2),
         round(song.dance, 2),
@@ -362,7 +375,6 @@ def is_song_in_cluster(song, centroid, radius=0.15):  # Increased tolerance for 
     # Calculate distance between the song vector and the cluster centroid
     distance = np.linalg.norm(np.array(song_vector) - np.array(centroid))
     
-    # Debugging output to check values and distance
     # print(f"Checking song '{song.name}' with vector {song_vector} against centroid {centroid}")
     # print(f"Distance: {distance}, Tolerance: {radius}")
     
@@ -370,15 +382,13 @@ def is_song_in_cluster(song, centroid, radius=0.15):  # Increased tolerance for 
 
 def user_cluster_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    user_cluster = user.user_cluster  # Assuming a one-to-one relationship with UserCluster
+    user_cluster = user.user_cluster
 
-    # Retrieve liked and disliked clusters from JSON fields
     liked_clusters = user_cluster.liked_clusters or []
     disliked_clusters = user_cluster.disliked_clusters or []
 
     liked_cluster_instances = []
     for cluster in liked_clusters:
-        # Get cluster name and rounded centroid
         cluster_name = get_user_cluster(cluster['centroid'])
         rounded_centroid = [round(val, 2) for val in cluster['centroid']]
         radius = cluster['radius']
@@ -386,7 +396,7 @@ def user_cluster_view(request, user_id):
         # Find songs in the user's liked songs that belong to this cluster
         cluster_songs = []
         for song in user.liked_songs.all():
-            if is_song_in_cluster(song, rounded_centroid, radius):  # Pass rounded centroid
+            if is_song_in_cluster(song, rounded_centroid, radius):
                 cluster_songs.append({
                     "image": song.image,
                     "title": song.name,
@@ -408,15 +418,13 @@ def user_cluster_view(request, user_id):
     
     disliked_cluster_instances = []
     for cluster in disliked_clusters:
-        # Get cluster name and rounded centroid
         cluster_name = get_user_cluster(cluster['centroid'])
         rounded_centroid = [round(val, 2) for val in cluster['centroid']]
         radius = cluster['radius']
         
-        # Find songs in the user's liked songs that belong to this cluster
         cluster_songs = []
         for song in user.disliked_songs.all():
-            if is_song_in_cluster(song, rounded_centroid, radius):  # Pass rounded centroid
+            if is_song_in_cluster(song, rounded_centroid, radius):
                 cluster_songs.append({
                     "image": song.image,
                     "title": song.name,
@@ -428,8 +436,6 @@ def user_cluster_view(request, user_id):
                     "valence": round(song.valence, 2),
                     "popularity": round(song.popularity / 100, 2) if song.popularity is not None else 0
                 })
-        
-        # Append each cluster with its name, centroid, and associated songs
         disliked_cluster_instances.append({
             "name": cluster_name,
             "centroid": rounded_centroid,

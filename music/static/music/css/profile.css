@@ -1,9 +1,8 @@
-/* Profile Container Styles */
+/* Profile style sheet*/
 .container {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Profile Links Styles */
 .profile-links ul {
     list-style: none;
     padding: 0;

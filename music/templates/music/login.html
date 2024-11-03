@@ -4,7 +4,7 @@
 {% block extra_head %}
     <link rel="stylesheet" type="text/css" href="{% static 'music/css/login_register.css' %}">
 {% endblock %}
-{% block title %}Login - Sonder{% endblock %}
+{% block title %}Login{% endblock %}
 
 {% block content %}
 <div class="user_card">
@@ -61,19 +61,18 @@
 </div>
 
 {% block extra_js %}
-<script>
-    /* Because I didn't set placeholder values in forms.py, they will be set here using vanilla JavaScript
-       We start indexing at one because CSRF_token is considered and input fields are indexed accordingly
-    */
+    <script>
+        /* Because I didn't set placeholder values in forms.py, they will be set here using vanilla JavaScript
+        We start indexing at one because CSRF_token is considered and input fields are indexed accordingly
+        */
 
-    // Query All input fields
-    var form_fields = document.getElementsByTagName('input');
-    form_fields[1].placeholder = 'Username';
-    form_fields[2].placeholder = 'Password';
+        var form_fields = document.getElementsByTagName('input');
+        form_fields[1].placeholder = 'Username';
+        form_fields[2].placeholder = 'Password';
 
-    for (var i = 1; i < form_fields.length; i++) {	
-        form_fields[i].classList.add('form-control');
-    }
-</script>
+        for (var i = 1; i < form_fields.length; i++) {	
+            form_fields[i].classList.add('form-control');
+        }
+    </script>
 {% endblock %}
 {% endblock %}

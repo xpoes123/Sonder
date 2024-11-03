@@ -1,12 +1,12 @@
 .container {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     max-width: 80%;
-    margin: 20px auto 0 auto;  /* Adds 20px margin at the top */
+    margin: 20px auto 0 auto;
 }
 
 .songs-table-container {
-    max-height: 600px;      /* Set a max height for the container */
-    overflow-y: auto;       /* Enable vertical scrolling */
+    max-height: 600px;
+    overflow-y: auto;
     margin-top: 20px;
     border: 1px solid #ddd;
     padding: 10px;
@@ -97,9 +97,9 @@ tr:hover {
 }
 
 .like-btn.active {
-    background-color: #218838; /* Darker green for active */
+    background-color: #218838;
 }
 
 .dislike-btn.active {
-    background-color: #c82333; /* Darker red for active */
+    background-color: #c82333;
 }

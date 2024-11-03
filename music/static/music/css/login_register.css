@@ -28,21 +28,21 @@
   }
   
   .login_register_button:hover {
-    background-color: #3a4edc; /* Slightly darker background on hover */
+    background-color: #3a4edc;
     box-shadow: rgba(50, 50, 93, 0.1) 0 0 0 1px inset, rgba(50, 50, 93, 0.15) 0 4px 10px 0, rgba(0, 0, 0, 0.1) 0 2px 2px 0;
     transform: scale(1.05); /* Scale up slightly on hover */
   }
   
   .login_register_button:active {
-    transform: scale(0.98); /* Pressed-down effect */
-    background-color: #334acc; /* Darker color on active */
+    transform: scale(0.98);
+    background-color: #334acc;
   }
   
   .login_register_button:focus {
     box-shadow: rgba(50, 50, 93, 0.1) 0 0 0 1px inset, rgba(50, 50, 93, 0.2) 0 6px 15px 0, rgba(0, 0, 0, 0.1) 0 2px 2px 0, rgba(50, 151, 211, 0.3) 0 0 0 4px;
   }
   
-  /* Animation for smooth transitions */
+
   @keyframes pulse {
     0%, 100% {
       transform: scale(1);
@@ -53,6 +53,6 @@
   }
   
   .login_register_button:hover {
-    animation: pulse 1s infinite; /* Pulse animation on hover */
+    animation: pulse 1s infinite;
   }
   

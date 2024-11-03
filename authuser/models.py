@@ -1,5 +1,3 @@
-# authuser/models.py
-
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 from django.utils import timezone
@@ -37,7 +35,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
-        # Validate superuser flags
+        # Ensure they are a superuser
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
@@ -45,6 +43,7 @@ class CustomUserManager(BaseUserManager):
 
         return self._create_user(username, email, password, **extra_fields)
 
+# Custom user class to give us song model parameters
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=150, unique=True, default="")
     email = models.EmailField(blank=True, default="", unique=True)
@@ -57,7 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     last_login = models.DateTimeField(blank=True, null=True)
     
-    # Relationships to songs
+    # Custom models for our specific app
     liked_songs = models.ManyToManyField('music.Song', related_name='liked_by_users', blank=True)
     disliked_songs = models.ManyToManyField('music.Song', related_name='disliked_by_users', blank=True)
     
@@ -82,13 +81,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.name or self.username
     
     def increment_liked_song_count(self):
-        """Increments the liked song count and checks if recommendations should run."""
         self.liked_song_count += 1
         self.save()
         return self.liked_song_count
 
     def increment_disliked_song_count(self):
-        """Increments the disliked song count."""
         self.disliked_song_count += 1
         self.save()
         return self.disliked_song_count
@@ -98,8 +95,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     
 class UserCluster(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True, related_name='user_cluster')
-    liked_clusters = JSONField(blank=True, null=True)  # Store liked clusters as JSON
-    disliked_clusters = JSONField(blank=True, null=True)  # Store disliked clusters as JSON
+    liked_clusters = JSONField(blank=True, null=True)
+    disliked_clusters = JSONField(blank=True, null=True)
 
     def __str__(self):
-        return f"Cluster data for {self.user.username}"
+        return f"Clusters for {self.user.username}"

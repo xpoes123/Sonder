@@ -64,10 +64,6 @@
 
 {% block extra_js %}
 <script>
-    /* Because I didn't set placeholder values in forms.py, they will be set here using vanilla JavaScript
-       We start indexing at one because CSRF_token is considered and input fields are indexed accordingly
-    */
-
     // Query All input fields
     var form_fields = document.getElementsByTagName('input');
     form_fields[1].placeholder = 'Username';
