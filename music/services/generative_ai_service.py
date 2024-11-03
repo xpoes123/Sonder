@@ -186,7 +186,7 @@ def get_phrase_from_cluster(cluster_name):
     
     message = (
         f"You are given 6 words that describe a genre vector with the stats acousticness, danceability, liveness, tempo, valence, and populiarty"
-        f"the words are {cluster_name.split("-")}. Using these descriptive words, make a name for a genre that this might describe. Keep the maximum"
+        f"the words are {cluster_name.split('-')}. Using these descriptive words, make a name for a genre that this might describe. Keep the maximum"
         f"number of words of the genre to be 4 words. And when you respond do not explain your thought process, please only respond with the genre name."
     )
     response = chat_session.send_message(message)
