@@ -16,8 +16,16 @@ from dotenv import load_dotenv
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    'default': dj_database_url.config(
+        default='postgres://ufesochberl7uo:p592c2d54640b38065d55e247205be9732cf0054a0e3726bc008dd33473881b9c@ccba8a0vn4fb2p.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d5hh7ki6amivvk',
+        conn_max_age=600
+    )
 }
+
+
+db_from_env = dj_database_url.config(comm_max_age=600)
+DATABASES['default'].update(db_from_env)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -96,17 +104,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'mywebsite.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation
