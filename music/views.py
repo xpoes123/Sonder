@@ -306,7 +306,7 @@ def remove_liked_song(request, user_id, song_id):
         song = get_object_or_404(Song, spotify_id=song_id)
         user.liked_songs.remove(song)
         messages.success(request, f"{song.name} was removed from your liked songs.")
-    return redirect('music:liked_songs', user_id=user_id)
+    return redirect('music:song_list', user_id=user_id)
 
 
 def remove_disliked_song(request, user_id, song_id):
@@ -315,7 +315,7 @@ def remove_disliked_song(request, user_id, song_id):
         song = get_object_or_404(Song, spotify_id=song_id)
         user.disliked_songs.remove(song)
         messages.success(request, f"{song.name} was removed from your disliked songs.")
-    return redirect(f'/profile/{user_id}/liked_songs/?view=disliked')
+    return redirect(f'/profile/{user_id}/song_list/?view=disliked')
 
 def get_user_cluster(centroid):
     """
